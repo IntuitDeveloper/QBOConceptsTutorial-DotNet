@@ -1,0 +1,56 @@
+﻿
+@{
+    ViewBag.Title = "Index";
+}
+
+<h2>Claims</h2>
+
+<dl>
+    @foreach (var claim in System.Security.Claims.ClaimsPrincipal.Current.Claims)
+    {
+        <dt>
+            @claim.Type
+        </dt>
+        
+        <dd>
+            @claim.Value
+        </dd>
+    }
+</dl>
+
+<p>
+    @Html.ActionLink("Call service", "CallService")
+</p>
+
+<p>
+    @Html.ActionLink("Report", "ReportCall", "Reports")
+</p>
+
+<p>
+    @Html.ActionLink("Estimate", "EstimateCall", "Estimate")
+</p>
+
+<p>
+    @Html.ActionLink("Customer", "CustomerCall", "Customer")
+</p>
+
+<p>
+    @Html.ActionLink("Item", "ItemCall", "Item")
+</p>
+
+<p>
+    @Html.ActionLink("Account", "AccountCall", "Account")
+</p>
+
+<p>
+    @Html.ActionLink("Refresh token", "RefreshToken")
+</p>
+
+<p>
+    @Html.ActionLink("Revoke access token", "RevokeAccessToken")
+</p>
+
+<p>
+    @Html.ActionLink("Revoke refresh token", "RevokeRefreshToken")
+</p>
+
