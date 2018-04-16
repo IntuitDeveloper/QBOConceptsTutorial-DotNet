@@ -58,5 +58,5 @@ After setting up both Developer Portal and your web.config(setup Log Path too), 
 All flows should work. The sample app supports the following flows:
 
 
-**Connect To QuickBooks** - this flow requests non-OpenID scopes. You will be able to make a QuickBooks API sample call (using the OAuth2 token) on the /connected landing page.
- This app also has calls fro CompanyInfo and a sample US company Invoice.
+**Connect To QuickBooks** - this flow requests non-OpenID scopes. You will be able to make a QuickBooks API different workflow calls (using the OAuth2 token) on the /connected landing page.
+ 
