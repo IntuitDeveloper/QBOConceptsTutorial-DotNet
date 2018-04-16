@@ -55,77 +55,10 @@ namespace MvcCodeFlowClientManual.Controllers
         }
 
        
-        /// <summary>
-        /// Make a test QBO api call with .Net sdk
-        /// </summary>
-        /// <returns></returns>
-        public async Task<ActionResult> CallService()
-        {
-            //var principal = User as ClaimsPrincipal;
 
-            ////Make QBO api all without .Net SDK
-            //string query = "select * from CompanyInfo";
-            //// build the  request
-            //string encodedQuery = WebUtility.UrlEncode(query);
-            //if (Session["realmId"] != null)
-            //{
-            //    string realmId = Session["realmId"].ToString();
-
-            //    string qboBaseUrl = ConfigurationManager.AppSettings["QBOBaseUrl"];
-
-            //    //add qbobase url and query
-            //    string uri = string.Format("{0}/v3/company/{1}/query?query={2}", qboBaseUrl, realmId, encodedQuery);
-               
-            //    string result="";
-                
-            //    try
-            //    {
-            //        var client = new HttpClient();
-                    
-            //        client.DefaultRequestHeaders.Add("Accept", "application/json;charset=UTF-8");
-            //        client.DefaultRequestHeaders.Add("ContentType", "application/json;charset=UTF-8");
-            //        client.DefaultRequestHeaders.Add("Authorization", "Bearer " + principal.FindFirst("access_token").Value);
-                    
-
-            //        result = await client.GetStringAsync(uri);
-            //        return View("CallService",(object)( "QBO API call success! " + result));
-            //    }
-            //    catch (Exception ex)
-            //    {
-            //        return View("CallService",(object)"QBO API call Failed!");
-            //    }
-
-       
-                //Make QBO api calls using .Net SDK
-                if (Session["realmId"] != null)
-                {
-                    string realmId = Session["realmId"].ToString();
-
-                
-
-                    try
-                    {
-                    // Use access token to retrieve company Info and create an Invoice
-                    //Initialize OAuth2RequestValidator and ServiceContext
-
-                    ServiceContext serviceContext = IntializeContext(realmId);
-                    QueryService<CompanyInfo> querySvc = new QueryService<CompanyInfo>(serviceContext);//CompanyInfo call
-                    CompanyInfo companyInfo = querySvc.ExecuteIdsQuery("SELECT * FROM CompanyInfo").FirstOrDefault();
-                    IntializeContext(realmId);//US company invoice create
-                    return View("CallService", (object)("QBO API calls success! "));
-                    }
-                    catch (Exception ex)
-                    {
-                        return View("CallService", (object)"QBO API calls Failed!");
-                    }
-
-                }
-            else
-                return View("CallService",(object)"QBO API call Failed!");
-        }
 
         /// <summary>
-        /// Refresh the token by making the call to 
+        /// Refresh the token 
         /// </summary>
         /// <returns></returns>
         protected async Task<ActionResult> RefreshToken()
@@ -141,86 +74,22 @@ namespace MvcCodeFlowClientManual.Controllers
             return RedirectToAction("Index");
         }
 
+       
         /// <summary>
-        /// This API creates an Invoice
+        /// Intialize servicecontext
         /// </summary>
-        private void CreateInvoice(string realmId)
-        {
-          
-
-
-
-            // Step 1: Initialize OAuth2RequestValidator and ServiceContext
-            ServiceContext serviceContext = IntializeContext(realmId);
-
-            // Step 2: Initialize an Invoice object
-            Invoice invoice = new Invoice();
-            invoice.Deposit = new Decimal(0.00);
-            invoice.DepositSpecified = true;
-
-            // Step 3: Invoice is always created for a customer so lets retrieve reference to a customer and set it in Invoice
-            QueryService<Customer> querySvc = new QueryService<Customer>(serviceContext);
-            Customer customer = querySvc.ExecuteIdsQuery("SELECT * FROM Customer WHERE CompanyName like 'Amy%'").FirstOrDefault();
-            invoice.CustomerRef = new ReferenceType()
-            {
-                Value = customer.Id
-            };
-
-
-            // Step 4: Invoice is always created for an item so lets retrieve reference to an item and a Line item to the invoice
-            QueryService<Item> querySvcItem = new QueryService<Item>(serviceContext);
-            Item item = querySvcItem.ExecuteIdsQuery("SELECT * FROM Item WHERE Name = 'Lighting'").FirstOrDefault();
-            List<Line> lineList = new List<Line>();
-            Line line = new Line();
-            line.Description = "Description";
-            line.Amount = new Decimal(100.00);
-            line.AmountSpecified = true;
-            lineList.Add(line);
-            invoice.Line = lineList.ToArray();
-
-            SalesItemLineDetail salesItemLineDetail = new SalesItemLineDetail();
-            salesItemLineDetail.Qty = new Decimal(1.0);
-            salesItemLineDetail.ItemRef = new ReferenceType()
-            {
-                Value = item.Id
-            };
-            line.AnyIntuitObject = salesItemLineDetail;
-
-            line.DetailType = LineDetailTypeEnum.SalesItemLineDetail;
-            line.DetailTypeSpecified = true;
-
-            // Step 5: Set other properties such as Total Amount, Due Date, Email status and Transaction Date
-            invoice.DueDate = DateTime.UtcNow.Date;
-            invoice.DueDateSpecified = true;
-
-
-            invoice.TotalAmt = new Decimal(10.00);
-            invoice.TotalAmtSpecified = true;
-
-            invoice.EmailStatus = EmailStatusEnum.NotSet;
-            invoice.EmailStatusSpecified = true;
-
-            invoice.Balance = new Decimal(10.00);
-            invoice.BalanceSpecified = true;
-
-            invoice.TxnDate = DateTime.UtcNow.Date;
-            invoice.TxnDateSpecified = true;
-            invoice.TxnTaxDetail = new TxnTaxDetail()
-            {
-                TotalTax = Convert.ToDecimal(10),
-                TotalTaxSpecified = true,
-            };
-
-            // Step 6: Initialize the service object and create Invoice
-            DataService service = new DataService(serviceContext);
-            Invoice addedInvoice = service.Add<Invoice>(invoice);
-        }
-
+        /// <param name="realmId"></param>
+        /// <returns></returns>
         public ServiceContext IntializeContext(string realmId)
         {
             var principal = User as ClaimsPrincipal;
             OAuth2RequestValidator oauthValidator = new OAuth2RequestValidator(principal.FindFirst("access_token").Value);
             ServiceContext serviceContext = new ServiceContext(realmId, IntuitServicesType.QBO, oauthValidator);
+            //Enable minorversion 
+            serviceContext.IppConfiguration.MinorVersion.Qbo = "23";
+            //Enable logging
+            //serviceContext.IppConfiguration.Logger.RequestLog.EnableRequestResponseLogging = true;
+            //serviceContext.IppConfiguration.Logger.RequestLog.ServiceRequestLoggingLocation = @"C:\IdsLogs";//Create a folder in your drive first
             return serviceContext;
         }
 

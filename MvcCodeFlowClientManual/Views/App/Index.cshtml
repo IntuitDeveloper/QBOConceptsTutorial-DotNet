@@ -11,36 +11,43 @@
         <dt>
             @claim.Type
         </dt>
-        
+
         <dd>
             @claim.Value
         </dd>
     }
 </dl>
+<p>QBO service related calls below-</p>
 
 <p>
-    @Html.ActionLink("Call service", "CallService")
+    @Html.ActionLink("Call CompanyInfo", "CompanyInfo", "CompanyInfo")
 </p>
 
 <p>
-    @Html.ActionLink("Report", "ReportCall", "Reports")
+    @Html.ActionLink("Reports Workflow", "ReportsWorkflow", "Reports")
 </p>
 
 <p>
-    @Html.ActionLink("Estimate", "EstimateCall", "Estimate")
+    @Html.ActionLink("Invoicing Workflow", "InvoicingWorkflow", "Invoicing")
 </p>
 
 <p>
-    @Html.ActionLink("Customer", "CustomerCall", "Customer")
+    @Html.ActionLink("Jobs Workflow", "JobsWorkflow", "Jobs")
 </p>
 
 <p>
-    @Html.ActionLink("Item", "ItemCall", "Item")
+    @Html.ActionLink("Accounting Workflow", "InventoryWorkflow", "Inventory")
 </p>
 
 <p>
-    @Html.ActionLink("Account", "AccountCall", "Account")
+    @Html.ActionLink("Inventory Workflow", "AccountingWorkflow","Accounting")
 </p>
+
+<p>
+    @Html.ActionLink("Billing Workflow", "BillingWorkflow", "Billing")
+</p>
+
+<p>Token related calls below-</p>
 
 <p>
     @Html.ActionLink("Refresh token", "RefreshToken")

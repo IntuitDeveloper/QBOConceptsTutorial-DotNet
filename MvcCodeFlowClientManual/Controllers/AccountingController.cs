@@ -1,14 +1,26 @@
-﻿using Intuit.Ipp.Core;
+﻿
+using Intuit.Ipp.OAuth2PlatformClient;
+using Intuit.Ipp.Core;
 using Intuit.Ipp.Data;
+using Intuit.Ipp.QueryFilter;
+using Intuit.Ipp.Security;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Net.Http;
+using System.Security.Claims;
 using System.Threading.Tasks;
+using System.Web;
 using System.Web.Mvc;
+using System.Configuration;
+using System.Net;
+using System.Net.Http.Headers;
 using Intuit.Ipp.DataService;
 
 namespace MvcCodeFlowClientManual.Controllers
 {
-    public class AccountController : AppController
+    public class AccountingController : AppController
     {
         // GET: Account
         public ActionResult Index()
@@ -16,7 +28,7 @@ namespace MvcCodeFlowClientManual.Controllers
             return View();
         }
 
-        public async Task<ActionResult> AccountCall()
+        public async Task<ActionResult> AccountingWorkflow()
         {
             //Make QBO api calls using .Net SDK
             if (Session["realmId"] != null)
@@ -25,29 +37,25 @@ namespace MvcCodeFlowClientManual.Controllers
 
                 try
                 {
-                    // Use access token to retrieve company Info and create an Invoice
+                   
                     //Initialize ServiceContext
                     ServiceContext serviceContext = base.IntializeContext(realmId);
-
-                    // Create account object 
-                    Account account = new Account();
-
-                    // Add account fields
-
                     DataService dataService = new DataService(serviceContext);
 
-                    // Add account to QBO using dataService
 
-                    return View("AccountCall", (object)("QBO API calls Success!"));
+                    // Add 2 account to QBO using dataService- 1 Bank/Debit Account, 1 Credit card Account
+                    // Create Journal Entry using above account
+
+                    return View("Index", (object)("QBO API calls Success!"));
                 }
                 catch (Exception ex)
                 {
-                    return View("AccountCall", (object)"QBO API calls Failed!");
+                    return View("Index", (object)"QBO API calls Failed!");
                 }
 
             }
             else
-                return View("AccountCall", (object)"QBO API call Failed!");
+                return View("Index", (object)"QBO API call Failed!");
         }
     }
 }
