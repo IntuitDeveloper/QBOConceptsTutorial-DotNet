@@ -49,7 +49,7 @@ namespace MvcCodeFlowClientManual.Controllers
                      * Deafult accounting method: Defined in Preferences.ReportPrefs.ReportBasis. The two accepted values are "Accural" and "Cash"
                      * Default includes data for all customers
                      * */
-                    defaultReportService.ExecuteReport("ProfitAndLoss");
+                    Report defaultPnLReport = defaultReportService.ExecuteReport("ProfitAndLoss");
 
                     /*
                      * Read default Balance sheet report:
@@ -59,7 +59,7 @@ namespace MvcCodeFlowClientManual.Controllers
                      * Default it is summarized by Total
                      * */
                     ReportService defaultReportService1 = new ReportService(serviceContext);
-                    defaultReportService1.ExecuteReport("BalanceSheet");
+                    Report defaultBalanceSheet = defaultReportService1.ExecuteReport("BalanceSheet");
 
                     /*  Get Balnace Sheet report for given start and end date
                      *  set start_date and end_date properties in the ReportService instance with the date range in yyyy-mm-dd format
@@ -67,7 +67,7 @@ namespace MvcCodeFlowClientManual.Controllers
                     ReportService dateRangeReportService = new ReportService(serviceContext);
                     dateRangeReportService.start_date = "2018-01-01";
                     dateRangeReportService.end_date = "2018-04-15";
-                    dateRangeReportService.ExecuteReport("BalanceSheet");
+                    Report dateRangeBalanceSheet = dateRangeReportService.ExecuteReport("BalanceSheet");
 
                     /*  Get Profit and Loss report for given start and end date
                      *  set start_date and end_date properties in the ReportService instance with the date range in yyyy-mm-dd format
@@ -75,7 +75,7 @@ namespace MvcCodeFlowClientManual.Controllers
                     ReportService dateRangeReportService1 = new ReportService(serviceContext);
                     dateRangeReportService1.start_date = "2018-01-01";
                     dateRangeReportService1.end_date = "2018-04-15";
-                    dateRangeReportService1.ExecuteReport("ProfitAndLoss");
+                    Report dateRangePnL = dateRangeReportService1.ExecuteReport("ProfitAndLoss");
 
                     /*  Get Profit and Loss report for given start and end date and cash accounting method
                      *  set accounting_method property to "Cash"
@@ -84,7 +84,7 @@ namespace MvcCodeFlowClientManual.Controllers
                     cashReportService.start_date = "2018-01-01";
                     cashReportService.end_date = "2018-04-15";
                     cashReportService.accounting_method = "Cash";
-                    cashReportService.ExecuteReport("ProfitAndLoss");
+                    Report cashPnLReport = cashReportService.ExecuteReport("ProfitAndLoss");
 
                     /*  Get Balance Sheet report for given start and end date and cash accounting method
                      *  set accounting_method property to "Cash"
@@ -93,7 +93,7 @@ namespace MvcCodeFlowClientManual.Controllers
                     cashReportService1.start_date = "2018-01-01";
                     cashReportService1.end_date = "2018-04-15";
                     cashReportService1.accounting_method = "Cash";
-                    cashReportService1.ExecuteReport("BalanceSheet");
+                    Report cashBalanceSheet = cashReportService1.ExecuteReport("BalanceSheet");
 
                     /* Year End Balance Sheet report summarized by Customer
                      * set the customer property to the customer.Id and set summarize_column_by property to "Customers"
@@ -105,7 +105,7 @@ namespace MvcCodeFlowClientManual.Controllers
                     customerReportService.end_date = "2018-12-31";
                     customerReportService.customer = "1";
                     customerReportService.summarize_column_by = "Customers";
-                    customerReportService.ExecuteReport("BalanceSheet");
+                    Report yearEndReportByCustomer = customerReportService.ExecuteReport("BalanceSheet");
 
                     /* Year End report summarized by Customer
                      * set the customer property to the customer.Id and set summarize_column_by property to "Customers"
@@ -117,7 +117,7 @@ namespace MvcCodeFlowClientManual.Controllers
                     customerReportService1.end_date = "2018-12-31";
                     customerReportService1.customer = "1";
                     customerReportService1.summarize_column_by = "Customers";
-                    customerReportService1.ExecuteReport("ProfitAndLoss");
+                    Report yearEndPnLByCustomer = customerReportService1.ExecuteReport("ProfitAndLoss");
 
                     /* Since we are calling the service with different parameters you could also use the getReport helper method
                      * by passing the different query parameters as shown
