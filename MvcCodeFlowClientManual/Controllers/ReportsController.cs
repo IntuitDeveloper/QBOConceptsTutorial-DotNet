@@ -56,6 +56,7 @@ namespace MvcCodeFlowClientManual.Controllers
                      * Default date used: This fiscal year to date
                      * Deafult accounting method: Defined in Preferences.ReportPrefs.ReportBasis. The two accepted values are "Accural" and "Cash"
                      * Default includes data for all customers
+                     * Default it is summarized by Total
                      * */
                     ReportService defaultReportService1 = new ReportService(serviceContext);
                     defaultReportService1.ExecuteReport("BalanceSheet");
@@ -82,7 +83,7 @@ namespace MvcCodeFlowClientManual.Controllers
                     ReportService cashReportService = new ReportService(serviceContext);
                     cashReportService.start_date = "2018-01-01";
                     cashReportService.end_date = "2018-04-15";
-                    cashReportService.accounting_method = "CASH";
+                    cashReportService.accounting_method = "Cash";
                     cashReportService.ExecuteReport("ProfitAndLoss");
 
                     /*  Get Balance Sheet report for given start and end date and cash accounting method
@@ -91,13 +92,13 @@ namespace MvcCodeFlowClientManual.Controllers
                     ReportService cashReportService1 = new ReportService(serviceContext);
                     cashReportService1.start_date = "2018-01-01";
                     cashReportService1.end_date = "2018-04-15";
-                    cashReportService1.accounting_method = "CASH";
+                    cashReportService1.accounting_method = "Cash";
                     cashReportService1.ExecuteReport("BalanceSheet");
 
                     /* Year End Balance Sheet report summarized by Customer
                      * set the customer property to the customer.Id and set summarize_column_by property to "Customers"
                      * You can also set customer property with multiple customer ids comma seperated.
-                     * You can summarize by the following: by setting the summarize_column_by property
+                     * You can summarize by the following:Total, Customers, Vendors, Classes, Departments, Employees, ProductsAndServices by setting the summarize_column_by property
                      * */
                     ReportService customerReportService = new ReportService(serviceContext);
                     customerReportService.start_date = "2018-01-01";
@@ -109,7 +110,7 @@ namespace MvcCodeFlowClientManual.Controllers
                     /* Year End report summarized by Customer
                      * set the customer property to the customer.Id and set summarize_column_by property to "Customers"
                      * You can also set customer property with multiple customer ids comma seperated.
-                     * You can summarize by the following: by setting the summarize_column_by property
+                     * You can summarize by the following:Total, Customers, Vendors, Classes, Departments, Employees, ProductsAndServices by setting the summarize_column_by property
                      * */
                     ReportService customerReportService1 = new ReportService(serviceContext);
                     customerReportService1.start_date = "2018-01-01";
