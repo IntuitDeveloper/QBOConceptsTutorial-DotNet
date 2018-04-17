@@ -61,6 +61,7 @@ namespace MvcCodeFlowClientManual.Controllers
         {
             Vendor vendor = new Vendor();
 
+            //Create a billing address
             PhysicalAddress billAddr = new PhysicalAddress();
             billAddr.Line1 = "Line1";
             billAddr.Line2 = "Line2";
@@ -71,8 +72,9 @@ namespace MvcCodeFlowClientManual.Controllers
             billAddr.Country = "Country";
             billAddr.CountrySubDivisionCode = "CountrySubDivisionCode";
             billAddr.PostalCode = "PostalCode";
-
             vendor.BillAddr = billAddr;
+
+            //Add additional vendor info
             vendor.TaxIdentifier = "TaxIdentifier";
             vendor.Balance = new Decimal(100.00);
             vendor.BalanceSpecified = true;
@@ -92,6 +94,7 @@ namespace MvcCodeFlowClientManual.Controllers
             vendor.Active = true;
             vendor.ActiveSpecified = true;
 
+            //Add contact details ie phone, fax, email and website details
             TelephoneNumber primaryPhone = new TelephoneNumber();
             primaryPhone.FreeFormNumber = "FreeFormNumber";
             vendor.PrimaryPhone = primaryPhone;
@@ -125,13 +128,16 @@ namespace MvcCodeFlowClientManual.Controllers
          */
         private static Bill CreateBill(ServiceContext serviceContext, Vendor vendors)
         {
+            //Find a customer
             QueryService<Customer> querySvc = new QueryService<Customer>(serviceContext);
             Customer customer = querySvc.ExecuteIdsQuery("SELECT * FROM Customer WHERE CompanyName like 'Amy%'").FirstOrDefault();
 
+            //Get a liability and an expense account
             QueryService<Account> accountQuerySvc = new QueryService<Account>(serviceContext);
             Account account = accountQuerySvc.ExecuteIdsQuery("SELECT * FROM Account WHERE AccountType='Accounts Payable' AND Classification='Liability'").FirstOrDefault();
-            Account accountExpense = accountQuerySvc.ExecuteIdsQuery("SELECT * FROM Account WHERE AccountType='Expense' AND Classification='Expense'").FirstOrDefault();
+            Account expenseAccount = accountQuerySvc.ExecuteIdsQuery("SELECT * FROM Account WHERE AccountType='Expense' AND Classification='Expense'").FirstOrDefault();
 
+            //Create a bill and add a vendor reference
             Bill bill = new Bill();
             bill.DueDate = DateTime.UtcNow.Date;
             bill.DueDateSpecified = true;
@@ -154,23 +160,23 @@ namespace MvcCodeFlowClientManual.Controllers
             bill.TxnDate = DateTime.UtcNow.Date;
             bill.TxnDateSpecified = true;
 
+            //Create a line for the bill
             List<Line> lineList = new List<Line>();
             Line line = new Line();
-            //line.LineNum = "LineNum";
             line.Description = "Description";
             line.Amount = new Decimal(100.00);
             line.AmountSpecified = true;
             line.DetailType = LineDetailTypeEnum.AccountBasedExpenseLineDetail;
             line.DetailTypeSpecified = true;
-
-            AccountBasedExpenseLineDetail detail = new AccountBasedExpenseLineDetail();
-            detail.CustomerRef = new ReferenceType { type = Enum.GetName(typeof(objectNameEnumType), objectNameEnumType.Customer), name = customer.DisplayName, Value = customer.Id };
-            detail.AccountRef = new ReferenceType { type = Enum.GetName(typeof(objectNameEnumType), objectNameEnumType.Account), name = accountExpense.Name, Value = accountExpense.Id };
-            detail.BillableStatus = BillableStatusEnum.NotBillable;
-
-            line.AnyIntuitObject = detail;
             lineList.Add(line);
             bill.Line = lineList.ToArray();
+
+            //Create an AccountBasedExpenseLineDetail
+            AccountBasedExpenseLineDetail detail = new AccountBasedExpenseLineDetail();
+            detail.CustomerRef = new ReferenceType { type = Enum.GetName(typeof(objectNameEnumType), objectNameEnumType.Customer), name = customer.DisplayName, Value = customer.Id };
+            detail.AccountRef = new ReferenceType { type = Enum.GetName(typeof(objectNameEnumType), objectNameEnumType.Account), name = expenseAccount.Name, Value = expenseAccount.Id };
+            detail.BillableStatus = BillableStatusEnum.NotBillable;
+            line.AnyIntuitObject = detail;
             return bill;
         }
 
@@ -182,6 +188,7 @@ namespace MvcCodeFlowClientManual.Controllers
         private static VendorCredit CreateVendorCredit(ServiceContext serviceContext, Vendor vendor)
         {
             QueryService<Account> accountQuerySvc = new QueryService<Account>(serviceContext);
+            //Create a VendorCredut and add a reference to a Vendor 
             VendorCredit vendorCredit = new VendorCredit();
             vendorCredit.VendorRef = new ReferenceType()
             {
@@ -189,6 +196,7 @@ namespace MvcCodeFlowClientManual.Controllers
                 Value = vendor.Id
             };
 
+            //Create a Liability Account and add a reference to the Vendor Credit
             Account liabilityAccount = accountQuerySvc.ExecuteIdsQuery("SELECT * FROM Account WHERE AccountType='Accounts Payable' AND Classification='Liability'").FirstOrDefault();
             vendorCredit.APAccountRef = new ReferenceType()
             {
@@ -196,11 +204,13 @@ namespace MvcCodeFlowClientManual.Controllers
                 Value = liabilityAccount.Id
             };
 
+            //Add Vendor credit details
             vendorCredit.TotalAmt = new Decimal(50.00);
             vendorCredit.TotalAmtSpecified = true;
             vendorCredit.TxnDate = DateTime.UtcNow.Date;
             vendorCredit.TxnDateSpecified = true;
 
+            //Create a line and add it to the Vendor Credit
             List<Line> lineList = new List<Line>();
             Line line = new Line();
             line.Description = "Description";
@@ -229,6 +239,7 @@ namespace MvcCodeFlowClientManual.Controllers
         {
             QueryService<Account> accountQuerySvc = new QueryService<Account>(serviceContext);
 
+            //Create a bill payment and associate it to the vendor. Add VendorCredit
             BillPayment billPayment = new BillPayment();
             billPayment.PayType = BillPaymentTypeEnum.Check;
             billPayment.PayTypeSpecified = true;
@@ -244,6 +255,7 @@ namespace MvcCodeFlowClientManual.Controllers
                 Value = vendor.Id
             };
 
+            //Create a Bank Account of type Credit Card. The bill payment will be via this account
             Account bankAccount = accountQuerySvc.ExecuteIdsQuery("SELECT * FROM Account WHERE AccountType='Credit Card' AND Classification='Liability'").FirstOrDefault();
             BillPaymentCreditCard billPaymentCreditCard = new BillPaymentCreditCard();
             billPaymentCreditCard.CCAccountRef = new ReferenceType()
@@ -273,6 +285,7 @@ namespace MvcCodeFlowClientManual.Controllers
             billPaymentCreditCard.CCDetail = creditCardPayment;
             billPayment.AnyIntuitObject = billPaymentCreditCard;
 
+            //Create a line and it to the BillPayment
             List<Line> lineList = new List<Line>();
             Line line1 = new Line();
             line1.Amount = bill.TotalAmt;
