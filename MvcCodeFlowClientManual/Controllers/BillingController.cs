@@ -128,14 +128,149 @@ namespace MvcCodeFlowClientManual.Controllers
          */
         private static Bill CreateBill(ServiceContext serviceContext, Vendor vendors)
         {
-            //Find a customer
+            //Find a customer. If not present create one
             QueryService<Customer> querySvc = new QueryService<Customer>(serviceContext);
             Customer customer = querySvc.ExecuteIdsQuery("SELECT * FROM Customer WHERE CompanyName like 'Amy%'").FirstOrDefault();
+            if(customer == null){
 
-            //Get a liability and an expense account
+                String guid = Guid.NewGuid().ToString("N");
+                customer = new Customer();
+                customer.Taxable = false;
+                customer.TaxableSpecified = true;
+                PhysicalAddress billAddr = new PhysicalAddress();
+                billAddr.Line1 = "Line1";
+                billAddr.Line2 = "Line2";
+                billAddr.Line3 = "Line3";
+                billAddr.Line4 = "Line4";
+                billAddr.Line5 = "Line5";
+                billAddr.City = "City";
+                billAddr.Country = "Country";
+                billAddr.CountrySubDivisionCode = "CountrySubDivisionCode";
+                billAddr.PostalCode = "PostalCode";            
+                customer.BillAddr = billAddr;
+
+                PhysicalAddress shipAddr = new PhysicalAddress();
+                shipAddr.Line1 = "Line1";
+                shipAddr.Line2 = "Line2";
+                shipAddr.Line3 = "Line3";
+                shipAddr.Line4 = "Line4";
+                shipAddr.Line5 = "Line5";
+                shipAddr.City = "City";
+                shipAddr.Country = "Country";
+                shipAddr.CountrySubDivisionCode = "CountrySubDivisionCode";
+                shipAddr.PostalCode = "PostalCode";
+                customer.ShipAddr = shipAddr;
+
+                List<PhysicalAddress> otherAddrList = new List<PhysicalAddress>();
+                PhysicalAddress otherAddr = new PhysicalAddress();
+                otherAddr.Line1 = "Line1";
+                otherAddr.Line2 = "Line2";
+                otherAddr.Line3 = "Line3";
+                otherAddr.Line4 = "Line4";
+                otherAddr.Line5 = "Line5";
+                otherAddr.City = "City";
+                otherAddr.Country = "Country";
+                otherAddr.CountrySubDivisionCode = "CountrySubDivisionCode";
+                otherAddr.PostalCode = "PostalCode";
+                otherAddrList.Add(otherAddr);
+
+                customer.OtherAddr = otherAddrList.ToArray();
+                customer.Notes = "Notes";
+                customer.Job = false;
+                customer.JobSpecified = true;
+                customer.BillWithParent = false;
+                customer.BillWithParentSpecified = true;
+                customer.Balance = new Decimal(100.00);
+                customer.BalanceSpecified = true;
+                customer.BalanceWithJobs = new Decimal(100.00);
+                customer.BalanceWithJobsSpecified = true;
+                customer.PreferredDeliveryMethod = "Print";
+                customer.ResaleNum = "ResaleNum";
+                customer.Title = "Title";
+                customer.GivenName = "GivenName";
+                customer.MiddleName = "MiddleName";
+                customer.FamilyName = "FamilyName";
+                customer.Suffix = "Suffix";
+                customer.FullyQualifiedName = "Name_" + guid;
+                customer.CompanyName = "CompanyName";
+                customer.DisplayName = "Name_" + guid;
+                customer.PrintOnCheckName = "PrintOnCheckName";
+
+                customer.Active = true;
+                customer.ActiveSpecified = true;
+                TelephoneNumber primaryPhone = new TelephoneNumber();
+
+                primaryPhone.FreeFormNumber = "FreeFormNumber";
+
+                customer.PrimaryPhone = primaryPhone;
+                TelephoneNumber alternatePhone = new TelephoneNumber();
+
+                alternatePhone.FreeFormNumber = "FreeFormNumber";
+
+                customer.AlternatePhone = alternatePhone;
+                TelephoneNumber mobile = new TelephoneNumber();
+
+                mobile.FreeFormNumber = "FreeFormNumber";
+
+                customer.Mobile = mobile;
+                TelephoneNumber fax = new TelephoneNumber();
+
+                fax.FreeFormNumber = "FreeFormNumber";
+
+                customer.Fax = fax;
+                EmailAddress primaryEmailAddr = new EmailAddress();
+                primaryEmailAddr.Address = "test@tesing.com";
+
+                customer.PrimaryEmailAddr = primaryEmailAddr;
+                WebSiteAddress webAddr = new WebSiteAddress();
+                webAddr.URI = "http://uri.com";
+                customer.WebAddr = webAddr;
+            }
+
+            //Get a liability account. If not present create one
             QueryService<Account> accountQuerySvc = new QueryService<Account>(serviceContext);
-            Account account = accountQuerySvc.ExecuteIdsQuery("SELECT * FROM Account WHERE AccountType='Accounts Payable' AND Classification='Liability'").FirstOrDefault();
+            Account liabilityAccount = accountQuerySvc.ExecuteIdsQuery("SELECT * FROM Account WHERE AccountType='Accounts Payable' AND Classification='Liability'").FirstOrDefault();
+            if(liabilityAccount == null)
+            {
+                liabilityAccount = new Account();
+                String guid = Guid.NewGuid().ToString("N");
+                liabilityAccount.Name = "Name_" + guid;
+
+                liabilityAccount.FullyQualifiedName = liabilityAccount.Name;
+
+                liabilityAccount.Classification = AccountClassificationEnum.Liability;
+                liabilityAccount.ClassificationSpecified = true;
+                liabilityAccount.AccountType = AccountTypeEnum.AccountsPayable;
+                liabilityAccount.AccountTypeSpecified = true;
+
+                liabilityAccount.CurrencyRef = new ReferenceType()
+                {
+                    name = "United States Dollar",
+                    Value = "USD"
+                };
+            }
+
+            //Get a Expense account. If not present create one
             Account expenseAccount = accountQuerySvc.ExecuteIdsQuery("SELECT * FROM Account WHERE AccountType='Expense' AND Classification='Expense'").FirstOrDefault();
+            if (expenseAccount == null)
+            {
+                expenseAccount = new Account();
+                String guid = Guid.NewGuid().ToString("N");
+                expenseAccount.Name = "Name_" + guid;
+
+                expenseAccount.FullyQualifiedName = expenseAccount.Name;
+
+                expenseAccount.Classification = AccountClassificationEnum.Liability;
+                expenseAccount.ClassificationSpecified = true;
+                expenseAccount.AccountType = AccountTypeEnum.AccountsPayable;
+                expenseAccount.AccountTypeSpecified = true;
+
+                expenseAccount.CurrencyRef = new ReferenceType()
+                {
+                    name = "United States Dollar",
+                    Value = "USD"
+                };
+            }
 
             //Create a bill and add a vendor reference
             Bill bill = new Bill();
@@ -150,8 +285,8 @@ namespace MvcCodeFlowClientManual.Controllers
             bill.APAccountRef = new ReferenceType()
             {
 
-                name = account.Name,
-                Value = account.Id
+                name = liabilityAccount.Name,
+                Value = liabilityAccount.Id
             };
             bill.TotalAmt = new Decimal(100.00);
             bill.TotalAmtSpecified = true;
@@ -196,8 +331,27 @@ namespace MvcCodeFlowClientManual.Controllers
                 Value = vendor.Id
             };
 
-            //Create a Liability Account and add a reference to the Vendor Credit
+            //Create a Liability Account and add a reference to the Vendor Credit. If not present create a  Liability Account
             Account liabilityAccount = accountQuerySvc.ExecuteIdsQuery("SELECT * FROM Account WHERE AccountType='Accounts Payable' AND Classification='Liability'").FirstOrDefault();
+            if (liabilityAccount == null)
+            {
+                liabilityAccount = new Account();
+                String guid = Guid.NewGuid().ToString("N");
+                liabilityAccount.Name = "Name_" + guid;
+
+                liabilityAccount.FullyQualifiedName = liabilityAccount.Name;
+
+                liabilityAccount.Classification = AccountClassificationEnum.Liability;
+                liabilityAccount.ClassificationSpecified = true;
+                liabilityAccount.AccountType = AccountTypeEnum.AccountsPayable;
+                liabilityAccount.AccountTypeSpecified = true;
+
+                liabilityAccount.CurrencyRef = new ReferenceType()
+                {
+                    name = "United States Dollar",
+                    Value = "USD"
+                };
+            }
             vendorCredit.APAccountRef = new ReferenceType()
             {
                 name = liabilityAccount.Name,
@@ -219,7 +373,28 @@ namespace MvcCodeFlowClientManual.Controllers
             line.DetailType = LineDetailTypeEnum.AccountBasedExpenseLineDetail;
             line.DetailTypeSpecified = true;
 
+            //Find an expense account and add a reference to it. If not present create one
             Account expenseAccount = accountQuerySvc.ExecuteIdsQuery("SELECT * FROM Account WHERE AccountType='Expense' AND Classification='Expense'").FirstOrDefault();
+            if (expenseAccount == null)
+            {
+                expenseAccount = new Account();
+                String guid = Guid.NewGuid().ToString("N");
+                expenseAccount.Name = "Name_" + guid;
+
+                expenseAccount.FullyQualifiedName = expenseAccount.Name;
+
+                expenseAccount.Classification = AccountClassificationEnum.Liability;
+                expenseAccount.ClassificationSpecified = true;
+                expenseAccount.AccountType = AccountTypeEnum.AccountsPayable;
+                expenseAccount.AccountTypeSpecified = true;
+
+                expenseAccount.CurrencyRef = new ReferenceType()
+                {
+                    name = "United States Dollar",
+                    Value = "USD"
+                };
+            }
+
             line.AnyIntuitObject = new AccountBasedExpenseLineDetail()
             {
                 AccountRef = new ReferenceType() { name = expenseAccount.Name, Value = expenseAccount.Id }
@@ -255,8 +430,27 @@ namespace MvcCodeFlowClientManual.Controllers
                 Value = vendor.Id
             };
 
-            //Create a Bank Account of type Credit Card. The bill payment will be via this account
+            //Create a Bank Account of type Credit Card. The bill payment will be via this account. If not present create a credit card account
             Account bankAccount = accountQuerySvc.ExecuteIdsQuery("SELECT * FROM Account WHERE AccountType='Credit Card' AND Classification='Liability'").FirstOrDefault();
+            if (bankAccount == null)
+            {
+                bankAccount = new Account();
+                String guid = Guid.NewGuid().ToString("N");
+                bankAccount.Name = "Name_" + guid;
+
+                bankAccount.FullyQualifiedName = bankAccount.Name;
+
+                bankAccount.Classification = AccountClassificationEnum.Liability;
+                bankAccount.ClassificationSpecified = true;
+                bankAccount.AccountType = AccountTypeEnum.CreditCard;
+                bankAccount.AccountTypeSpecified = true;
+
+                bankAccount.CurrencyRef = new ReferenceType()
+                {
+                    name = "United States Dollar",
+                    Value = "USD"
+                };
+            }
             BillPaymentCreditCard billPaymentCreditCard = new BillPaymentCreditCard();
             billPaymentCreditCard.CCAccountRef = new ReferenceType()
             {
