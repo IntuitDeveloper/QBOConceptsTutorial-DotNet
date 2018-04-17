@@ -36,10 +36,10 @@ namespace MvcCodeFlowClientManual.Controllers
                     Vendor vendor = CreateVendor();
                     //Add Bill for this Vendor
                     Bill bill = CreateBill(serviceContext, vendor);
-                    //Create Vendor Credit
+                    //Add BillPayment for this Vendor
+                    BillPayment billPayment = CreateBillPaymentCreditCard(serviceContext, vendor, bill);
+                    //Create & Apply Vendor Credit
                     VendorCredit vendorCredit = CreateVendorCredit(serviceContext, vendor);
-                    //Add BillPayment for this Vendor and apply a VendorCredit
-                    BillPayment billPayment = CreateBillPaymentCreditCard(serviceContext, vendor, bill, vendorCredit);
 
                     return View("Index", (object)("QBO API calls Success!"));
                 }
@@ -410,7 +410,7 @@ namespace MvcCodeFlowClientManual.Controllers
          * A BillPayment object represents the payment transaction for a bill that the business owner receives from a vendor for goods or services purchased from the vendor. 
          * QuickBooks Online supports bill payments through a credit card or a checking account. 
          */
-        private static BillPayment CreateBillPaymentCreditCard(ServiceContext serviceContext, Vendor vendor, Bill bill, VendorCredit vendorCredit)
+        private static BillPayment CreateBillPaymentCreditCard(ServiceContext serviceContext, Vendor vendor, Bill bill)
         {
             QueryService<Account> accountQuerySvc = new QueryService<Account>(serviceContext);
 
@@ -418,7 +418,7 @@ namespace MvcCodeFlowClientManual.Controllers
             BillPayment billPayment = new BillPayment();
             billPayment.PayType = BillPaymentTypeEnum.Check;
             billPayment.PayTypeSpecified = true;
-            billPayment.TotalAmt = vendorCredit.TotalAmt;
+            billPayment.TotalAmt = 300;
             billPayment.TotalAmtSpecified = true;
             billPayment.TxnDate = DateTime.UtcNow.Date;
             billPayment.TxnDateSpecified = true;
@@ -492,11 +492,11 @@ namespace MvcCodeFlowClientManual.Controllers
             line1.LinkedTxn = LinkedTxnList1.ToArray();
             lineList.Add(line1);
             Line line = new Line();
-            line.Amount = vendorCredit.TotalAmt;
+            line.Amount = 300;
             line.AmountSpecified = true;
             List<LinkedTxn> LinkedTxnList = new List<LinkedTxn>();
             LinkedTxn linkedTxn = new LinkedTxn();
-            linkedTxn.TxnId = vendorCredit.Id;
+            linkedTxn.TxnId = bill.Id;
             linkedTxn.TxnType = TxnTypeEnum.VendorCredit.ToString();
             LinkedTxnList.Add(linkedTxn);
             line.LinkedTxn = LinkedTxnList.ToArray();
