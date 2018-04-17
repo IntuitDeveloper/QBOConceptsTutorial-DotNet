@@ -112,7 +112,7 @@ namespace MvcCodeFlowClientManual.Controllers
             // We are creating new Account by type and subtype which we will use for new inventory
             // The Account name should be unique
             // Following lines are just object creation, to create this account in QBO it should follow by the service call
-            Account incomeAccount = new Account
+            Account newAccount = new Account
             {
                 Name = "My "+type.ToString()+" Account 15", // Dont forget to change the name before running the code
                 AccountType = type,
@@ -121,7 +121,7 @@ namespace MvcCodeFlowClientManual.Controllers
                 SubAccountSpecified = true
             };
             // Following line will create incomeAccount in quickbooks with Name= My Income Account
-            return dataService.Add<Account>(incomeAccount);
+            return dataService.Add<Account>(newAccount);
         }
 
         private Invoice CreateInvoice(DataService dataService,ServiceContext serviceContext, Item item)
