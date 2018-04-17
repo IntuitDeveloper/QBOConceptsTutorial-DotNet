@@ -30,10 +30,15 @@ namespace MvcCodeFlowClientManual.Controllers
                 {  
                     //Initialize ServiceContext
                     ServiceContext serviceContext = base.IntializeContext(realmId);
+
                     // Create Journal Entry by creating 2 accounts(Bank, Credit Card);
                     //Adding the Bill using Dataservice object
                     DataService service = new DataService(serviceContext);
+
+                    //Create Joirnal request
                     JournalEntry journalEntryRequest = CreateJournalEntry(serviceContext);
+
+                    // Make a QBO Journal Api call
                     JournalEntry journalEntryResponse = service.Add<JournalEntry>(journalEntryRequest);
 
                     return View("Index", (object)("QBO API calls Success!"));
@@ -67,7 +72,7 @@ namespace MvcCodeFlowClientManual.Controllers
             //Initializing the Dataservice object with ServiceContext
             DataService service = new DataService(context);
 
-            //Create JournalEntry
+            //Create JournalEntry Request
             JournalEntry journalEntry = new JournalEntry();
             journalEntry.Adjustment = true;
             journalEntry.AdjustmentSpecified = true;
@@ -79,7 +84,7 @@ namespace MvcCodeFlowClientManual.Controllers
 
             List<Line> lineList = new List<Line>();
 
-            // Create/Update Bank Account Line
+            // Create Bank Account Line
             Line debitLine = new Line();
             debitLine.Description = "nov portion of rider insurance";
             debitLine.Amount = new Decimal(100.00);
@@ -91,15 +96,14 @@ namespace MvcCodeFlowClientManual.Controllers
             journalEntryLineDetail.PostingTypeSpecified = true;
 
             //Find or create account
-
             Account typeOfAccount = null;
             AccountTypeEnum accountType = AccountTypeEnum.Bank;
             string accountTypeName = "Bank";
-
-            //Find existing account by accounttype
+            //Find existing account by accounttype from database
             QueryService<Account> querySvc = new QueryService<Account>(context);
             Account existingAccount = querySvc.ExecuteIdsQuery("select * from account where accounttype='" + accountTypeName + "'").FirstOrDefault();
 
+            // Update Account 
             if (existingAccount != null)
             {
                 if (existingAccount.AccountType == accountType && existingAccount.Classification == AccountClassificationEnum.Asset && existingAccount.status != EntityStatusEnum.SyncError)
@@ -107,7 +111,7 @@ namespace MvcCodeFlowClientManual.Controllers
                     typeOfAccount = existingAccount;
                 }
             }
-
+            // Create new Account
             if (typeOfAccount == null)
             {
                 Account account = new Account();
@@ -133,18 +137,18 @@ namespace MvcCodeFlowClientManual.Controllers
                     Value = "USD"
                 };
 
-                //Adding the Bill using Dataservice object
+                // Calling create account service api call
                 Account addedAccount = service.Add<Account>(account);
                 typeOfAccount = addedAccount;
             }
-
+            //Assiging back bank account object
             Account bankAccount = typeOfAccount;
 
             journalEntryLineDetail.AccountRef = new ReferenceType() { type = Enum.GetName(typeof(objectNameEnumType), objectNameEnumType.Account), name = bankAccount.Name, Value = bankAccount.Id };
             debitLine.AnyIntuitObject = journalEntryLineDetail;
             lineList.Add(debitLine);
 
-            // Create/Update Credit Card Account
+            // Create Credit Card Account object
             Line creditLine = new Line();
             creditLine.Description = "nov portion of rider insurance";
             creditLine.Amount = new Decimal(100.00);
@@ -154,12 +158,12 @@ namespace MvcCodeFlowClientManual.Controllers
             JournalEntryLineDetail journalEntryLineDetailCredit = new JournalEntryLineDetail();
             journalEntryLineDetailCredit.PostingType = PostingTypeEnum.Credit;
             journalEntryLineDetailCredit.PostingTypeSpecified = true;
-            //Find or create account
 
+            //Find or create account
             accountType = AccountTypeEnum.CreditCard;
             accountTypeName = "Credit Card";
-            //Find existing account by accounttype
 
+            //Find existing account by accounttype
             querySvc = new QueryService<Account>(context);
             existingAccount = null;
             existingAccount = querySvc.ExecuteIdsQuery("select * from account where accounttype='" + accountTypeName + "'").FirstOrDefault();
@@ -168,10 +172,11 @@ namespace MvcCodeFlowClientManual.Controllers
             {
                 if (existingAccount.AccountType == accountType && existingAccount.Classification == AccountClassificationEnum.Liability && existingAccount.status != EntityStatusEnum.SyncError)
                 {
+                    //Existing account
                     typeOfAccount = existingAccount;
                 }
             }
-
+            // New Credit Card Account
             if (typeOfAccount == null)
             {
                 Account account = new Account();
@@ -197,7 +202,7 @@ namespace MvcCodeFlowClientManual.Controllers
                     Value = "USD"
                 };
 
-                //Adding the Bill using Dataservice object
+                //Creating new Credit Card account by calling API call
                 Account addedAccount = service.Add<Account>(account);
                 typeOfAccount = addedAccount;
             }
@@ -208,8 +213,10 @@ namespace MvcCodeFlowClientManual.Controllers
             creditLine.AnyIntuitObject = journalEntryLineDetailCredit;
             lineList.Add(creditLine);
 
+            // Added both Bank & Credit Card Lines
             journalEntry.Line = lineList.ToArray();
 
+            //Return the journal request
             return journalEntry;
         }
     }
