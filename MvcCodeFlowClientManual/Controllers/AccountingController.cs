@@ -52,15 +52,6 @@ namespace MvcCodeFlowClientManual.Controllers
             else
                 return View("Index", (object)"QBO API call Failed!");
         }
-        /// <summary>
-        /// Generates GUID and gives it back
-        /// </summary>
-        /// <returns></returns>
-        internal static string GetGuid()
-        {
-            return Guid.NewGuid().ToString("N");
-        }
-
         
         /// <summary>
         /// creates Journal Entries by creating/updating Bank & Credit Card accounts
@@ -83,7 +74,7 @@ namespace MvcCodeFlowClientManual.Controllers
             // creating lines for a JournalEntry
             List<Line> lineList = new List<Line>();
 
-            // Create Bank Account Line
+            // Create debit line
             Line debitLine = new Line();
             debitLine.Description = "April portion of rider insurance";
             debitLine.Amount = new Decimal(100.00);
@@ -136,16 +127,13 @@ namespace MvcCodeFlowClientManual.Controllers
             lineList.Add(debitLine);
 
             #region Create CreditCard Account
-            // Create Credit Card Account object
+            // Create Credit Card line
             Line creditLine = new Line();
             creditLine.Description = "April portion of rider insurance";
             creditLine.Amount = new Decimal(100.00);
             creditLine.AmountSpecified = true;
             creditLine.DetailType = LineDetailTypeEnum.JournalEntryLineDetail;
             creditLine.DetailTypeSpecified = true;
-            JournalEntryLineDetail journalEntryLineDetailCredit = new JournalEntryLineDetail();
-            journalEntryLineDetailCredit.PostingType = PostingTypeEnum.Credit;
-            journalEntryLineDetailCredit.PostingTypeSpecified = true;
 
             //Find or create account
             Account creditAccount = null;
@@ -166,11 +154,8 @@ namespace MvcCodeFlowClientManual.Controllers
             if (creditAccount == null)
             {
                 creditAccount = new Account();
-
                 creditAccount.Name = "Tharak_" + Guid.NewGuid().ToString("N");
-
                 creditAccount.FullyQualifiedName = creditAccount.Name;
-
                 creditAccount.Classification = AccountClassificationEnum.Liability;
                 creditAccount.ClassificationSpecified = true;
                 creditAccount.AccountType = AccountTypeEnum.CreditCard;
@@ -187,6 +172,9 @@ namespace MvcCodeFlowClientManual.Controllers
             }
             #endregion
 
+            JournalEntryLineDetail journalEntryLineDetailCredit = new JournalEntryLineDetail();
+            journalEntryLineDetailCredit.PostingType = PostingTypeEnum.Credit;
+            journalEntryLineDetailCredit.PostingTypeSpecified = true;
             journalEntryLineDetailCredit.AccountRef = new ReferenceType() { type = Enum.GetName(typeof(objectNameEnumType), objectNameEnumType.Account), name = creditAccount.Name, Value = creditAccount.Id };
             creditLine.AnyIntuitObject = journalEntryLineDetailCredit;
             lineList.Add(creditLine);
