@@ -141,8 +141,15 @@ namespace MvcCodeFlowClientManual.Controllers
                     Invoice invoice = new Invoice();
                     invoice.CustomerRef = estimate.CustomerRef;
                     invoice.Line = estimate.Line;
+                    //Include a reference to the Estimate on the new Invoice
+                    LinkedTxn estimateLink = new LinkedTxn()
+                    {
+                        TxnType = "Estimate",
+                        TxnId = estimate.Id
+                    };
+                    invoice.LinkedTxn = new LinkedTxn[] { estimateLink };
                     invoice = dataService.Add<Invoice>(invoice);
-
+                    
                     // Update Invoice to add $5 Discount
                     Account discountAccount = new Account();
                     String discountAccountName = "Discounts given";
