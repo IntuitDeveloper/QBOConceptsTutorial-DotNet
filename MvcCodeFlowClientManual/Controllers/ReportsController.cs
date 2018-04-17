@@ -41,19 +41,89 @@ namespace MvcCodeFlowClientManual.Controllers
                     ServiceContext serviceContext = base.IntializeContext(realmId);
 
                     // Create ReportService object
-                    ReportService reportService1 = new ReportService(serviceContext);
+                    ReportService defaultReportService = new ReportService(serviceContext);
 
-                    // Add report query parameters 
-                    // Run/Read PnL report
-                    Report report_pnl = reportService1.ExecuteReport("ProfitAndLoss");
+                    /*
+                     * Read default profit and Loss report: 
+                     * Default date used: This fiscal year to date
+                     * Deafult accounting method: Defined in Preferences.ReportPrefs.ReportBasis. The two accepted values are "Accural" and "Cash"
+                     * Default includes data for all customers
+                     * */
+                    defaultReportService.ExecuteReport("ProfitAndLoss");
 
-                    ReportService reportService2 = new ReportService(serviceContext);
-                    // Add report query parameters 
-                    // Run/Read Balance sheet report
-                    Report report_balance_sheet = reportService2.ExecuteReport("BalanceSheet");
+                    /*
+                     * Read default Balance sheet report:
+                     * Default date used: This fiscal year to date
+                     * Deafult accounting method: Defined in Preferences.ReportPrefs.ReportBasis. The two accepted values are "Accural" and "Cash"
+                     * Default includes data for all customers
+                     * Default it is summarized by Total
+                     * */
+                    ReportService defaultReportService1 = new ReportService(serviceContext);
+                    defaultReportService1.ExecuteReport("BalanceSheet");
 
-                    //run year end reports summarize by customer
+                    /*  Get Balnace Sheet report for given start and end date
+                     *  set start_date and end_date properties in the ReportService instance with the date range in yyyy-mm-dd format
+                     * */
+                    ReportService dateRangeReportService = new ReportService(serviceContext);
+                    dateRangeReportService.start_date = "2018-01-01";
+                    dateRangeReportService.end_date = "2018-04-15";
+                    dateRangeReportService.ExecuteReport("BalanceSheet");
 
+                    /*  Get Profit and Loss report for given start and end date
+                     *  set start_date and end_date properties in the ReportService instance with the date range in yyyy-mm-dd format
+                     * */
+                    ReportService dateRangeReportService1 = new ReportService(serviceContext);
+                    dateRangeReportService1.start_date = "2018-01-01";
+                    dateRangeReportService1.end_date = "2018-04-15";
+                    dateRangeReportService1.ExecuteReport("ProfitAndLoss");
+
+                    /*  Get Profit and Loss report for given start and end date and cash accounting method
+                     *  set accounting_method property to "Cash"
+                     * */
+                    ReportService cashReportService = new ReportService(serviceContext);
+                    cashReportService.start_date = "2018-01-01";
+                    cashReportService.end_date = "2018-04-15";
+                    cashReportService.accounting_method = "Cash";
+                    cashReportService.ExecuteReport("ProfitAndLoss");
+
+                    /*  Get Balance Sheet report for given start and end date and cash accounting method
+                     *  set accounting_method property to "Cash"
+                     * */
+                    ReportService cashReportService1 = new ReportService(serviceContext);
+                    cashReportService1.start_date = "2018-01-01";
+                    cashReportService1.end_date = "2018-04-15";
+                    cashReportService1.accounting_method = "Cash";
+                    cashReportService1.ExecuteReport("BalanceSheet");
+
+                    /* Year End Balance Sheet report summarized by Customer
+                     * set the customer property to the customer.Id and set summarize_column_by property to "Customers"
+                     * You can also set customer property with multiple customer ids comma seperated.
+                     * You can summarize by the following:Total, Customers, Vendors, Classes, Departments, Employees, ProductsAndServices by setting the summarize_column_by property
+                     * */
+                    ReportService customerReportService = new ReportService(serviceContext);
+                    customerReportService.start_date = "2018-01-01";
+                    customerReportService.end_date = "2018-12-31";
+                    customerReportService.customer = "1";
+                    customerReportService.summarize_column_by = "Customers";
+                    customerReportService.ExecuteReport("BalanceSheet");
+
+                    /* Year End report summarized by Customer
+                     * set the customer property to the customer.Id and set summarize_column_by property to "Customers"
+                     * You can also set customer property with multiple customer ids comma seperated.
+                     * You can summarize by the following:Total, Customers, Vendors, Classes, Departments, Employees, ProductsAndServices by setting the summarize_column_by property
+                     * */
+                    ReportService customerReportService1 = new ReportService(serviceContext);
+                    customerReportService1.start_date = "2018-01-01";
+                    customerReportService1.end_date = "2018-12-31";
+                    customerReportService1.customer = "1";
+                    customerReportService1.summarize_column_by = "Customers";
+                    customerReportService1.ExecuteReport("ProfitAndLoss");
+
+                    /* Since we are calling the service with different parameters you could also use the getReport helper method
+                     * by passing the different query parameters as shown
+                     * Report report_pnl = getReport(serviceContext, "2015-01-01", "2015-03-01", "Accural", "ProfitAndLoss");
+                     * Report report_balance_sheet =getReport(serviceContext, "", "", "Cash", "BalanceSheet");
+                     * */
 
 
                     return View("Index", (object)("QBO API calls success!"));
@@ -67,5 +137,31 @@ namespace MvcCodeFlowClientManual.Controllers
             else
                 return View("Index", (object)"QBO API call Failed!");
         }
+
+        /*
+         * Helper method that take parameters to generate Report. It can be extended to add more query parameters. Using the most used as parameters
+         * for now.
+        public Report getReport(ServiceContext context, String startDate, String endDate, String accountingMethod, String reportName){
+            // Create ReportService object
+            ReportService reportService =  new ReportService(context);
+            //Set properties for Report
+            if(!String.IsNullOrEmpty(startDate))
+            {
+                reportService.start_date = startDate;
+            }
+            if (!String.IsNullOrEmpty(endDate))
+            {
+                reportService.end_date = endDate;
+            }
+            if (!String.IsNullOrEmpty(accountingMethod))
+            {
+                reportService.accounting_method = accountingMethod;
+            }
+            //Execute Report API call
+            Report report = reportService.ExecuteReport(reportName);
+            return report;
+
+        }
+        */
     }
 }
