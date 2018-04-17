@@ -117,7 +117,7 @@ namespace MvcCodeFlowClientManual.Controllers
                 Account account = new Account();
 
                 String guid = GetGuid();
-                account.Name = "Name_";
+                account.Name = "Tharak_";
 
                 account.FullyQualifiedName = account.Name;
 
