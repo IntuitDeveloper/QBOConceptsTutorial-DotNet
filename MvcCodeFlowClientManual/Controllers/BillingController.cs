@@ -1,4 +1,4 @@
-﻿using Intuit.Ipp.Core;
+using Intuit.Ipp.Core;
 using Intuit.Ipp.Data;
 using Intuit.Ipp.QueryFilter;
 using System;
