@@ -41,7 +41,7 @@ namespace MvcCodeFlowClientManual.Controllers
                     //Initialize OAuth2RequestValidator and ServiceContext
                     ServiceContext serviceContext = base.IntializeContext(realmId);
                     DataService dataService = new DataService(serviceContext);
-                   
+
                     // Add Customer
                     Customer customer = new Customer();
                     String customerName = "Brad Smith";
