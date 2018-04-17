@@ -52,15 +52,6 @@ namespace MvcCodeFlowClientManual.Controllers
             else
                 return View("Index", (object)"QBO API call Failed!");
         }
-        /// <summary>
-        /// Generates GUID and gives it back
-        /// </summary>
-        /// <returns></returns>
-        internal static string GetGuid()
-        {
-            return Guid.NewGuid().ToString("N");
-        }
-
         
         /// <summary>
         /// creates Journal Entries by creating/updating Bank & Credit Card accounts
@@ -76,144 +67,119 @@ namespace MvcCodeFlowClientManual.Controllers
             JournalEntry journalEntry = new JournalEntry();
             journalEntry.Adjustment = true;
             journalEntry.AdjustmentSpecified = true;
-
-            journalEntry.DocNumber = "DocNumber" + GetGuid().Substring(0, 5);
+            journalEntry.DocNumber = "Tharak_DocNumber" + Guid.NewGuid().ToString("N").Substring(0, 5);
             journalEntry.TxnDate = DateTime.UtcNow.Date;
             journalEntry.TxnDateSpecified = true;
 
-
+            // creating lines for a JournalEntry
             List<Line> lineList = new List<Line>();
 
-            // Create Bank Account Line
+            // Create debit line
             Line debitLine = new Line();
-            debitLine.Description = "nov portion of rider insurance";
+            debitLine.Description = "April portion of rider insurance";
             debitLine.Amount = new Decimal(100.00);
             debitLine.AmountSpecified = true;
             debitLine.DetailType = LineDetailTypeEnum.JournalEntryLineDetail;
             debitLine.DetailTypeSpecified = true;
-            JournalEntryLineDetail journalEntryLineDetail = new JournalEntryLineDetail();
-            journalEntryLineDetail.PostingType = PostingTypeEnum.Debit;
-            journalEntryLineDetail.PostingTypeSpecified = true;
 
+            #region Create Bank Account
             //Find or create account
-            Account typeOfAccount = null;
-            AccountTypeEnum accountType = AccountTypeEnum.Bank;
-            string accountTypeName = "Bank";
+            Account debitAccount = null;
             //Find existing account by accounttype from database
             QueryService<Account> querySvc = new QueryService<Account>(context);
-            Account existingAccount = querySvc.ExecuteIdsQuery("select * from account where accounttype='" + accountTypeName + "'").FirstOrDefault();
+            Account existingAccount = querySvc.ExecuteIdsQuery("select * from account where accounttype='Bank'").FirstOrDefault();
 
             // Update Account 
             if (existingAccount != null)
             {
-                if (existingAccount.AccountType == accountType && existingAccount.Classification == AccountClassificationEnum.Asset && existingAccount.status != EntityStatusEnum.SyncError)
+                if (existingAccount.AccountType == AccountTypeEnum.Bank && existingAccount.Classification == AccountClassificationEnum.Asset && existingAccount.status != EntityStatusEnum.SyncError)
                 {
-                    typeOfAccount = existingAccount;
+                    debitAccount = existingAccount;
                 }
             }
             // Create new Account
-            if (typeOfAccount == null)
+            if (debitAccount == null)
             {
-                Account account = new Account();
-
-                String guid = GetGuid();
-                account.Name = "Name_";
-
-                account.FullyQualifiedName = account.Name;
-
-                account.Classification = AccountClassificationEnum.Asset;
-                account.ClassificationSpecified = true;
-                account.AccountType = accountType;
-                account.AccountTypeSpecified = true;
-
-                if (accountType != AccountTypeEnum.Expense && accountType != AccountTypeEnum.AccountsPayable && accountType != AccountTypeEnum.AccountsReceivable)
-                {
-
-                }
-
-                account.CurrencyRef = new ReferenceType()
+                debitAccount = new Account();
+                debitAccount.Name = "Tharak_" + Guid.NewGuid().ToString("N");
+                debitAccount.FullyQualifiedName = debitAccount.Name;
+                debitAccount.Classification = AccountClassificationEnum.Asset;
+                debitAccount.ClassificationSpecified = true;
+                debitAccount.AccountType = AccountTypeEnum.Bank;
+                debitAccount.AccountTypeSpecified = true;
+                debitAccount.CurrencyRef = new ReferenceType()
                 {
                     name = "United States Dollar",
                     Value = "USD"
                 };
 
                 // Calling create account service api call
-                Account addedAccount = service.Add<Account>(account);
-                typeOfAccount = addedAccount;
+                Account addedAccount = service.Add<Account>(debitAccount);
+                debitAccount = addedAccount;
             }
-            //Assiging back bank account object
-            Account bankAccount = typeOfAccount;
+            #endregion
 
-            journalEntryLineDetail.AccountRef = new ReferenceType() { type = Enum.GetName(typeof(objectNameEnumType), objectNameEnumType.Account), name = bankAccount.Name, Value = bankAccount.Id };
+            JournalEntryLineDetail journalEntryLineDetail = new JournalEntryLineDetail();
+            journalEntryLineDetail.PostingType = PostingTypeEnum.Debit;
+            journalEntryLineDetail.PostingTypeSpecified = true;
+            journalEntryLineDetail.AccountRef = new ReferenceType() { type = Enum.GetName(typeof(objectNameEnumType), objectNameEnumType.Account), name = debitAccount.Name, Value = debitAccount.Id };
             debitLine.AnyIntuitObject = journalEntryLineDetail;
             lineList.Add(debitLine);
 
-            // Create Credit Card Account object
+            #region Create CreditCard Account
+            // Create Credit Card line
             Line creditLine = new Line();
-            creditLine.Description = "nov portion of rider insurance";
+            creditLine.Description = "April portion of rider insurance";
             creditLine.Amount = new Decimal(100.00);
             creditLine.AmountSpecified = true;
             creditLine.DetailType = LineDetailTypeEnum.JournalEntryLineDetail;
             creditLine.DetailTypeSpecified = true;
-            JournalEntryLineDetail journalEntryLineDetailCredit = new JournalEntryLineDetail();
-            journalEntryLineDetailCredit.PostingType = PostingTypeEnum.Credit;
-            journalEntryLineDetailCredit.PostingTypeSpecified = true;
 
             //Find or create account
-            accountType = AccountTypeEnum.CreditCard;
-            accountTypeName = "Credit Card";
-
+            Account creditAccount = null;
             //Find existing account by accounttype
             querySvc = new QueryService<Account>(context);
             existingAccount = null;
-            existingAccount = querySvc.ExecuteIdsQuery("select * from account where accounttype='" + accountTypeName + "'").FirstOrDefault();
+            existingAccount = querySvc.ExecuteIdsQuery("select * from account where accounttype='Credit Card'").FirstOrDefault();
 
             if (existingAccount != null)
             {
-                if (existingAccount.AccountType == accountType && existingAccount.Classification == AccountClassificationEnum.Liability && existingAccount.status != EntityStatusEnum.SyncError)
+                if (existingAccount.AccountType == AccountTypeEnum.CreditCard && existingAccount.Classification == AccountClassificationEnum.Liability && existingAccount.status != EntityStatusEnum.SyncError)
                 {
                     //Existing account
-                    typeOfAccount = existingAccount;
+                    creditAccount = existingAccount;
                 }
             }
             // New Credit Card Account
-            if (typeOfAccount == null)
+            if (creditAccount == null)
             {
-                Account account = new Account();
-
-                String guid = GetGuid();
-                account.Name = "Name_";
-
-                account.FullyQualifiedName = account.Name;
-
-                account.Classification = AccountClassificationEnum.Liability;
-                account.ClassificationSpecified = true;
-                account.AccountType = accountType;
-                account.AccountTypeSpecified = true;
-
-                if (accountType != AccountTypeEnum.Expense && accountType != AccountTypeEnum.AccountsPayable && accountType != AccountTypeEnum.AccountsReceivable)
-                {
-
-                }
-
-                account.CurrencyRef = new ReferenceType()
+                creditAccount = new Account();
+                creditAccount.Name = "Tharak_" + Guid.NewGuid().ToString("N");
+                creditAccount.FullyQualifiedName = creditAccount.Name;
+                creditAccount.Classification = AccountClassificationEnum.Liability;
+                creditAccount.ClassificationSpecified = true;
+                creditAccount.AccountType = AccountTypeEnum.CreditCard;
+                creditAccount.AccountTypeSpecified = true;
+                creditAccount.CurrencyRef = new ReferenceType()
                 {
                     name = "United States Dollar",
                     Value = "USD"
                 };
 
                 //Creating new Credit Card account by calling API call
-                Account addedAccount = service.Add<Account>(account);
-                typeOfAccount = addedAccount;
+                Account addedAccount = service.Add<Account>(creditAccount);
+                creditAccount = addedAccount;
             }
+            #endregion
 
-            Account assetAccount = typeOfAccount;
-
-            journalEntryLineDetailCredit.AccountRef = new ReferenceType() { type = Enum.GetName(typeof(objectNameEnumType), objectNameEnumType.Account), name = assetAccount.Name, Value = assetAccount.Id };
+            JournalEntryLineDetail journalEntryLineDetailCredit = new JournalEntryLineDetail();
+            journalEntryLineDetailCredit.PostingType = PostingTypeEnum.Credit;
+            journalEntryLineDetailCredit.PostingTypeSpecified = true;
+            journalEntryLineDetailCredit.AccountRef = new ReferenceType() { type = Enum.GetName(typeof(objectNameEnumType), objectNameEnumType.Account), name = creditAccount.Name, Value = creditAccount.Id };
             creditLine.AnyIntuitObject = journalEntryLineDetailCredit;
             lineList.Add(creditLine);
 
-            // Added both Bank & Credit Card Lines
+            // Added both Bank & Credit Card Lines to journal
             journalEntry.Line = lineList.ToArray();
 
             //Return the journal request
