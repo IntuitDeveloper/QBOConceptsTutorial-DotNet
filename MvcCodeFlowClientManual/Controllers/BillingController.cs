@@ -1,21 +1,11 @@
-﻿
-using Intuit.Ipp.OAuth2PlatformClient;
-using Intuit.Ipp.Core;
+﻿using Intuit.Ipp.Core;
 using Intuit.Ipp.Data;
 using Intuit.Ipp.QueryFilter;
-using Intuit.Ipp.Security;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
-using System.Security.Claims;
 using System.Threading.Tasks;
-using System.Web;
 using System.Web.Mvc;
-using System.Configuration;
-using System.Net;
-using System.Net.Http.Headers;
 using Intuit.Ipp.DataService;
 
 namespace MvcCodeFlowClientManual.Controllers
@@ -42,13 +32,14 @@ namespace MvcCodeFlowClientManual.Controllers
                     ServiceContext serviceContext = base.IntializeContext(realmId);
                     DataService dataService = new DataService(serviceContext);
 
-
-                    //Add Vendor
+                    //Create a Vendor
+                    Vendor vendor = CreateVendor();
                     //Add Bill for this Vendor
-                    //Add BillPayment for this Vendor
-                    //Apply Vendor Credit
-
-
+                    Bill bill = CreateBill(serviceContext, vendor);
+                    //Creaye Vendor Credit
+                    VendorCredit vendorCredit = CreateVendorCredit(serviceContext, vendor);
+                    //Add BillPayment for this Vendor and apply a vendorCredit
+                    BillPayment billPayment = CreateBillPaymentCreditCard(serviceContext, vendor, bill, vendorCredit);
 
                     return View("Index", (object)("QBO API calls Success!"));
                 }
@@ -61,5 +52,279 @@ namespace MvcCodeFlowClientManual.Controllers
             else
                 return View("Index", (object)"QBO API call Failed!");
         }
+
+        private static Vendor CreateVendor()
+        {
+            Vendor vendor = new Vendor();
+
+            PhysicalAddress billAddr = new PhysicalAddress();
+            billAddr.Line1 = "Line1";
+            billAddr.Line2 = "Line2";
+            billAddr.Line3 = "Line3";
+            billAddr.Line4 = "Line4";
+            billAddr.Line5 = "Line5";
+            billAddr.City = "City";
+            billAddr.Country = "Country";
+
+            billAddr.CountrySubDivisionCode = "CountrySubDivisionCode";
+            billAddr.PostalCode = "PostalCode";
+
+            vendor.BillAddr = billAddr;
+
+            vendor.TaxIdentifier = "TaxIdentifier";
+
+            vendor.Balance = new Decimal(100.00);
+            vendor.BalanceSpecified = true;
+            vendor.OpenBalanceDate = DateTime.UtcNow.Date;
+            vendor.OpenBalanceDateSpecified = true;
+
+            vendor.AcctNum = "AcctNum";
+            vendor.Vendor1099 = true;
+            vendor.Vendor1099Specified = true;
+
+            vendor.Title = "Title";
+            vendor.GivenName = "GivenName";
+            vendor.MiddleName = "MiddleName";
+            vendor.FamilyName = "FamilyName";
+            vendor.Suffix = "Suffix";
+
+
+            vendor.CompanyName = "CompanyName";
+            vendor.DisplayName = "DisplayName_" + Guid.NewGuid().ToString("N");
+            vendor.PrintOnCheckName = "PrintOnCheckName";
+
+            vendor.Active = true;
+            vendor.ActiveSpecified = true;
+            TelephoneNumber primaryPhone = new TelephoneNumber();
+
+            primaryPhone.FreeFormNumber = "FreeFormNumber";
+
+            vendor.PrimaryPhone = primaryPhone;
+            TelephoneNumber alternatePhone = new TelephoneNumber();
+
+            alternatePhone.FreeFormNumber = "FreeFormNumber";
+
+            vendor.AlternatePhone = alternatePhone;
+            TelephoneNumber mobile = new TelephoneNumber();
+
+            mobile.FreeFormNumber = "FreeFormNumber";
+
+            vendor.Mobile = mobile;
+            TelephoneNumber fax = new TelephoneNumber();
+
+            fax.FreeFormNumber = "FreeFormNumber";
+
+            vendor.Fax = fax;
+            EmailAddress primaryEmailAddr = new EmailAddress();
+            primaryEmailAddr.Address = "Address@add.com";
+
+            vendor.PrimaryEmailAddr = primaryEmailAddr;
+            WebSiteAddress webAddr = new WebSiteAddress();
+            webAddr.URI = "http://site.com";
+
+            vendor.WebAddr = webAddr;
+
+            return vendor;
+        }
+
+        private static Bill CreateBill(ServiceContext serviceContext, Vendor vendors)
+        {
+
+            QueryService<Customer> querySvc = new QueryService<Customer>(serviceContext);
+            Customer customer = querySvc.ExecuteIdsQuery("SELECT * FROM Customer WHERE CompanyName like 'Amy%'").FirstOrDefault();
+
+
+            QueryService<Account> accountQuerySvc = new QueryService<Account>(serviceContext);
+            Account account = accountQuerySvc.ExecuteIdsQuery("SELECT * FROM Account WHERE AccountType='Accounts Payable' AND Classification='Liability'").FirstOrDefault();
+            Account accountExpense = accountQuerySvc.ExecuteIdsQuery("SELECT * FROM Account WHERE AccountType='Expense' AND Classification='Expense'").FirstOrDefault();
+
+            Bill bill = new Bill();
+
+            bill.DueDate = DateTime.UtcNow.Date;
+            bill.DueDateSpecified = true;
+
+            bill.VendorRef = new ReferenceType()
+            {
+
+                name = vendors.DisplayName,
+                Value = vendors.Id
+            };
+            bill.APAccountRef = new ReferenceType()
+            {
+
+                name = account.Name,
+                Value = account.Id
+            };
+            bill.TotalAmt = new Decimal(100.00);
+            bill.TotalAmtSpecified = true;
+            bill.Balance = new Decimal(100.00);
+            bill.BalanceSpecified = true;
+
+            bill.TxnDate = DateTime.UtcNow.Date;
+            bill.TxnDateSpecified = true;
+
+
+            List<Line> lineList = new List<Line>();
+            Line line = new Line();
+            //line.LineNum = "LineNum";
+            line.Description = "Description";
+            line.Amount = new Decimal(100.00);
+            line.AmountSpecified = true;
+
+
+            line.DetailType = LineDetailTypeEnum.AccountBasedExpenseLineDetail;
+            line.DetailTypeSpecified = true;
+
+            AccountBasedExpenseLineDetail detail = new AccountBasedExpenseLineDetail();
+            detail.CustomerRef = new ReferenceType { type = Enum.GetName(typeof(objectNameEnumType), objectNameEnumType.Customer), name = customer.DisplayName, Value = customer.Id };
+            detail.AccountRef = new ReferenceType { type = Enum.GetName(typeof(objectNameEnumType), objectNameEnumType.Account), name = accountExpense.Name, Value = accountExpense.Id };
+            detail.BillableStatus = BillableStatusEnum.NotBillable;
+
+            line.AnyIntuitObject = detail;
+
+
+            lineList.Add(line);
+            bill.Line = lineList.ToArray();
+
+            return bill;
+        }
+
+        private static VendorCredit CreateVendorCredit(ServiceContext serviceContext, Vendor vendor)
+        {
+            QueryService<Account> accountQuerySvc = new QueryService<Account>(serviceContext);
+            VendorCredit vendorCredit = new VendorCredit();
+
+            vendorCredit.VendorRef = new ReferenceType()
+            {
+                name = vendor.DisplayName,
+                Value = vendor.Id
+            };
+
+            Account liabilityAccount = accountQuerySvc.ExecuteIdsQuery("SELECT * FROM Account WHERE AccountType='Accounts Payable' AND Classification='Liability'").FirstOrDefault();
+            vendorCredit.APAccountRef = new ReferenceType()
+            {
+                name = liabilityAccount.Name,
+                Value = liabilityAccount.Id
+            };
+
+            vendorCredit.TotalAmt = new Decimal(50.00);
+            vendorCredit.TotalAmtSpecified = true;
+
+            vendorCredit.TxnDate = DateTime.UtcNow.Date;
+            vendorCredit.TxnDateSpecified = true;
+
+
+            List<Line> lineList = new List<Line>();
+            Line line = new Line();
+
+            line.Description = "Description";
+            line.Amount = new Decimal(50.00);
+            line.AmountSpecified = true;
+
+
+            line.DetailType = LineDetailTypeEnum.AccountBasedExpenseLineDetail;
+            line.DetailTypeSpecified = true;
+
+            Account expenseAccount = accountQuerySvc.ExecuteIdsQuery("SELECT * FROM Account WHERE AccountType='Expense' AND Classification='Expense'").FirstOrDefault();
+            line.AnyIntuitObject = new AccountBasedExpenseLineDetail()
+            {
+                AccountRef = new ReferenceType() { name = expenseAccount.Name, Value = expenseAccount.Id }
+            };
+
+
+            lineList.Add(line);
+            vendorCredit.Line = lineList.ToArray();
+
+            return vendorCredit;
+        }
+
+        internal static BillPayment CreateBillPaymentCreditCard(ServiceContext serviceContext, Vendor vendor, Bill bill, VendorCredit vendorCredit)
+        {
+            QueryService<Account> accountQuerySvc = new QueryService<Account>(serviceContext);
+
+            BillPayment billPayment = new BillPayment();
+            billPayment.PayType = BillPaymentTypeEnum.Check;
+            billPayment.PayTypeSpecified = true;
+
+            billPayment.TotalAmt = vendorCredit.TotalAmt;
+            billPayment.TotalAmtSpecified = true;
+
+            billPayment.TxnDate = DateTime.UtcNow.Date;
+            billPayment.TxnDateSpecified = true;
+
+            billPayment.PrivateNote = "PrivateNote";
+
+            billPayment.VendorRef = new ReferenceType()
+            {
+                name = vendor.DisplayName,
+                type = "Vendor",
+                Value = vendor.Id
+            };
+
+            Account bankAccount = accountQuerySvc.ExecuteIdsQuery("SELECT * FROM Account WHERE AccountType='Credit Card' AND Classification='Liability'").FirstOrDefault();
+            BillPaymentCreditCard billPaymentCreditCard = new BillPaymentCreditCard();
+            billPaymentCreditCard.CCAccountRef = new ReferenceType()
+            {
+                name = bankAccount.Name,
+                Value = bankAccount.Id
+            };
+
+            CreditCardPayment creditCardPayment = new CreditCardPayment();
+            creditCardPayment.CreditChargeInfo = new CreditChargeInfo()
+            {
+                Amount = new Decimal(10.00),
+                AmountSpecified = true,
+                Number = "124124124",
+                NameOnAcct = bankAccount.Name,
+                CcExpiryMonth = 10,
+                CcExpiryMonthSpecified = true,
+                CcExpiryYear = 2015,
+                CcExpiryYearSpecified = true,
+                BillAddrStreet = "BillAddrStreetba7cca47",
+                PostalCode = "560045",
+                CommercialCardCode = "CardCodeba7cca47",
+                CCTxnMode = CCTxnModeEnum.CardPresent,
+                CCTxnType = CCTxnTypeEnum.Charge
+            };
+
+            billPaymentCreditCard.CCDetail = creditCardPayment;
+            billPayment.AnyIntuitObject = billPaymentCreditCard;
+
+            List<Line> lineList = new List<Line>();
+
+            Line line1 = new Line();
+
+            line1.Amount = bill.TotalAmt;
+            line1.AmountSpecified = true;
+            List<LinkedTxn> LinkedTxnList1 = new List<LinkedTxn>();
+            LinkedTxn linkedTxn1 = new LinkedTxn();
+            linkedTxn1.TxnId = bill.Id;
+            linkedTxn1.TxnType = TxnTypeEnum.Bill.ToString();
+            LinkedTxnList1.Add(linkedTxn1);
+            line1.LinkedTxn = LinkedTxnList1.ToArray();
+
+            lineList.Add(line1);
+
+            Line line = new Line();
+
+
+            line.Amount = vendorCredit.TotalAmt;
+            line.AmountSpecified = true;
+
+            List<LinkedTxn> LinkedTxnList = new List<LinkedTxn>();
+            LinkedTxn linkedTxn = new LinkedTxn();
+            linkedTxn.TxnId = vendorCredit.Id;
+            linkedTxn.TxnType = TxnTypeEnum.VendorCredit.ToString();
+            LinkedTxnList.Add(linkedTxn);
+            line.LinkedTxn = LinkedTxnList.ToArray();
+
+            lineList.Add(line);
+
+            billPayment.Line = lineList.ToArray();
+
+            return billPayment;
+        }
+
+
     }
 }
