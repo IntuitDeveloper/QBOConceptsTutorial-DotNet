@@ -1,3 +1,5 @@
+[![Sample Banner](views/Sample.png)][ss1]
+
 # QBOConceptsTutorial-DotNet
 
 
@@ -60,3 +62,4 @@ All flows should work. The sample app supports the following flows:
 
 **Connect To QuickBooks** - this flow requests non-OpenID scopes. You will be able to make a QuickBooks API different workflow calls (using the OAuth2 token) on the /connected landing page.
  
+[ss1]: https://help.developer.intuit.com/s/samplefeedback?cid=9010&repoName=QBOConceptsTutorial-DotNet
