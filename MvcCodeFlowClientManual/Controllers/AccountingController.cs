@@ -19,6 +19,9 @@ namespace MvcCodeFlowClientManual.Controllers
             return View();
         }
 
+        /// <summary>
+        /// Create a JE with debit and credit lines
+        /// </summary>
         public async Task<ActionResult> AccountingWorkflow()
         {
             //Make QBO api calls using .Net SDK
@@ -35,7 +38,7 @@ namespace MvcCodeFlowClientManual.Controllers
                     //Adding the Bill using Dataservice object
                     DataService service = new DataService(serviceContext);
 
-                    //Create Joirnal request
+                    //Create Journal request
                     JournalEntry journalEntryRequest = CreateJournalEntry(serviceContext);
 
                     // Make a QBO Journal Api call
@@ -58,7 +61,7 @@ namespace MvcCodeFlowClientManual.Controllers
         /// </summary>
         /// <param name="context"></param>
         /// <returns></returns>
-        internal static JournalEntry CreateJournalEntry(ServiceContext context)
+        public JournalEntry CreateJournalEntry(ServiceContext context)
         {
             //Initializing the Dataservice object with ServiceContext
             DataService service = new DataService(context);
@@ -82,12 +85,12 @@ namespace MvcCodeFlowClientManual.Controllers
             debitLine.DetailType = LineDetailTypeEnum.JournalEntryLineDetail;
             debitLine.DetailTypeSpecified = true;
 
-            #region Create Bank Account
+            #region Create Debit Bank Account
             //Find or create account
-            Account debitAccount = null;
+            Account debitAccount = new Account();
             //Find existing account by accounttype from database
             QueryService<Account> querySvc = new QueryService<Account>(context);
-            Account existingAccount = querySvc.ExecuteIdsQuery("select * from account where accounttype='Bank'").FirstOrDefault();
+            Account existingAccount = querySvc.ExecuteIdsQuery("select * from Account where AccountType='Bank'").FirstOrDefault();
 
             // Update Account 
             if (existingAccount != null)
@@ -97,7 +100,7 @@ namespace MvcCodeFlowClientManual.Controllers
                     debitAccount = existingAccount;
                 }
             }
-            // Create new Account
+            // Create new Account if debit existing account not found
             if (debitAccount == null)
             {
                 debitAccount = new Account();
@@ -119,10 +122,11 @@ namespace MvcCodeFlowClientManual.Controllers
             }
             #endregion
 
+            //Add JE debit line
             JournalEntryLineDetail journalEntryLineDetail = new JournalEntryLineDetail();
             journalEntryLineDetail.PostingType = PostingTypeEnum.Debit;
             journalEntryLineDetail.PostingTypeSpecified = true;
-            journalEntryLineDetail.AccountRef = new ReferenceType() { type = Enum.GetName(typeof(objectNameEnumType), objectNameEnumType.Account), name = debitAccount.Name, Value = debitAccount.Id };
+            journalEntryLineDetail.AccountRef = new ReferenceType() { name = debitAccount.Name, Value = debitAccount.Id };
             debitLine.AnyIntuitObject = journalEntryLineDetail;
             lineList.Add(debitLine);
 
@@ -140,7 +144,7 @@ namespace MvcCodeFlowClientManual.Controllers
             //Find existing account by accounttype
             querySvc = new QueryService<Account>(context);
             existingAccount = null;
-            existingAccount = querySvc.ExecuteIdsQuery("select * from account where accounttype='Credit Card'").FirstOrDefault();
+            existingAccount = querySvc.ExecuteIdsQuery("select * from Account where AccountType='Credit Card'").FirstOrDefault();
 
             if (existingAccount != null)
             {
@@ -150,7 +154,7 @@ namespace MvcCodeFlowClientManual.Controllers
                     creditAccount = existingAccount;
                 }
             }
-            // New Credit Card Account
+            // Create new Credit Card Account if existing account not found
             if (creditAccount == null)
             {
                 creditAccount = new Account();
@@ -172,14 +176,15 @@ namespace MvcCodeFlowClientManual.Controllers
             }
             #endregion
 
+            //Add JE credit line
             JournalEntryLineDetail journalEntryLineDetailCredit = new JournalEntryLineDetail();
             journalEntryLineDetailCredit.PostingType = PostingTypeEnum.Credit;
             journalEntryLineDetailCredit.PostingTypeSpecified = true;
-            journalEntryLineDetailCredit.AccountRef = new ReferenceType() { type = Enum.GetName(typeof(objectNameEnumType), objectNameEnumType.Account), name = creditAccount.Name, Value = creditAccount.Id };
+            journalEntryLineDetailCredit.AccountRef = new ReferenceType() { name = creditAccount.Name, Value = creditAccount.Id };
             creditLine.AnyIntuitObject = journalEntryLineDetailCredit;
             lineList.Add(creditLine);
 
-            // Added both Bank & Credit Card Lines to journal
+            // Added both Debit & Credit Lines to journal
             journalEntry.Line = lineList.ToArray();
 
             //Return the journal request

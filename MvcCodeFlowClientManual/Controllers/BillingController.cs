@@ -18,6 +18,9 @@ namespace MvcCodeFlowClientManual.Controllers
             return View();
         }
 
+        /// <summary>
+        /// Workflow to create Vendor, Bill, VendorCredit, BillPayment 
+        /// </summary>
         public async Task<ActionResult> BillingWorkflow()
         {
             //Make QBO api calls using .Net SDK
@@ -27,13 +30,13 @@ namespace MvcCodeFlowClientManual.Controllers
 
                 try
                 {
-               
+
                     //Initialize OAuth2RequestValidator and ServiceContext
                     ServiceContext serviceContext = base.IntializeContext(realmId);
-                    DataService dataService = new DataService(serviceContext);
+
 
                     //Create a Vendor
-                    Vendor vendor = CreateVendor();
+                    Vendor vendor = CreateVendor(serviceContext);
                     //Add Bill for this Vendor
                     Bill bill = CreateBill(serviceContext, vendor);
                     //Add BillPayment for this Vendor
@@ -53,44 +56,26 @@ namespace MvcCodeFlowClientManual.Controllers
                 return View("Index", (object)"QBO API call Failed!");
         }
 
+        #region create vendor
         /*
          * Create a Vendor
          * The Vendor object represents the seller from whom your company purchases any service or product. 
          */
-        private static Vendor CreateVendor()
+        private Vendor CreateVendor(ServiceContext serviceContext)
         {
+            DataService dataService = new DataService(serviceContext);
             Vendor vendor = new Vendor();
 
-            //Create a billing address
-            PhysicalAddress billAddr = new PhysicalAddress();
-            billAddr.Line1 = "Line1";
-            billAddr.Line2 = "Line2";
-            billAddr.Line3 = "Line3";
-            billAddr.Line4 = "Line4";
-            billAddr.Line5 = "Line5";
-            billAddr.City = "City";
-            billAddr.Country = "Country";
-            billAddr.CountrySubDivisionCode = "CountrySubDivisionCode";
-            billAddr.PostalCode = "PostalCode";
-            vendor.BillAddr = billAddr;
 
             //Add additional vendor info
-            vendor.TaxIdentifier = "TaxIdentifier";
-            vendor.Balance = new Decimal(100.00);
-            vendor.BalanceSpecified = true;
-            vendor.OpenBalanceDate = DateTime.UtcNow.Date;
-            vendor.OpenBalanceDateSpecified = true;
-            vendor.AcctNum = "AcctNum";
-            vendor.Vendor1099 = true;
-            vendor.Vendor1099Specified = true;
-            vendor.Title = "Title";
+
             vendor.GivenName = "GivenName";
             vendor.MiddleName = "MiddleName";
             vendor.FamilyName = "FamilyName";
             vendor.Suffix = "Suffix";
             vendor.CompanyName = "CompanyName";
             vendor.DisplayName = "DisplayName_" + Guid.NewGuid().ToString("N");
-            vendor.PrintOnCheckName = "PrintOnCheckName";
+      
             vendor.Active = true;
             vendor.ActiveSpecified = true;
 
@@ -118,162 +103,86 @@ namespace MvcCodeFlowClientManual.Controllers
             WebSiteAddress webAddr = new WebSiteAddress();
             webAddr.URI = "http://site.com";
             vendor.WebAddr = webAddr;
-
-            return vendor;
+            Vendor vendorAdded = dataService.Add<Vendor>(vendor);
+            return vendorAdded;
         }
+        #endregion
 
+        #region create bill
         /*
          * Create's a Bill
          * A Bill object is an AP transaction representing a request-for-payment from a third party for goods/services rendered, received, or both. 
          */
-        private static Bill CreateBill(ServiceContext serviceContext, Vendor vendors)
+        private Bill CreateBill(ServiceContext serviceContext, Vendor vendors)
         {
-            //Find a customer. If not present create one
-            QueryService<Customer> querySvc = new QueryService<Customer>(serviceContext);
-            Customer customer = querySvc.ExecuteIdsQuery("SELECT * FROM Customer WHERE CompanyName like 'Amy%'").FirstOrDefault();
-            if(customer == null){
+            DataService dataService = new DataService(serviceContext);
+            #region create customer
+            Random random = new Random();
+            Customer customer = new Customer();
 
-                String guid = Guid.NewGuid().ToString("N");
-                customer = new Customer();
-                customer.Taxable = false;
-                customer.TaxableSpecified = true;
-                PhysicalAddress billAddr = new PhysicalAddress();
-                billAddr.Line1 = "Line1";
-                billAddr.Line2 = "Line2";
-                billAddr.Line3 = "Line3";
-                billAddr.Line4 = "Line4";
-                billAddr.Line5 = "Line5";
-                billAddr.City = "City";
-                billAddr.Country = "Country";
-                billAddr.CountrySubDivisionCode = "CountrySubDivisionCode";
-                billAddr.PostalCode = "PostalCode";            
-                customer.BillAddr = billAddr;
+            customer.GivenName = "Bob" + random.Next();
+            customer.FamilyName = "Serling";
+            customer.DisplayName = customer.CompanyName;
+            Customer customeradded = dataService.Add<Customer>(customer);
 
-                PhysicalAddress shipAddr = new PhysicalAddress();
-                shipAddr.Line1 = "Line1";
-                shipAddr.Line2 = "Line2";
-                shipAddr.Line3 = "Line3";
-                shipAddr.Line4 = "Line4";
-                shipAddr.Line5 = "Line5";
-                shipAddr.City = "City";
-                shipAddr.Country = "Country";
-                shipAddr.CountrySubDivisionCode = "CountrySubDivisionCode";
-                shipAddr.PostalCode = "PostalCode";
-                customer.ShipAddr = shipAddr;
+            #endregion
 
-                List<PhysicalAddress> otherAddrList = new List<PhysicalAddress>();
-                PhysicalAddress otherAddr = new PhysicalAddress();
-                otherAddr.Line1 = "Line1";
-                otherAddr.Line2 = "Line2";
-                otherAddr.Line3 = "Line3";
-                otherAddr.Line4 = "Line4";
-                otherAddr.Line5 = "Line5";
-                otherAddr.City = "City";
-                otherAddr.Country = "Country";
-                otherAddr.CountrySubDivisionCode = "CountrySubDivisionCode";
-                otherAddr.PostalCode = "PostalCode";
-                otherAddrList.Add(otherAddr);
-
-                customer.OtherAddr = otherAddrList.ToArray();
-                customer.Notes = "Notes";
-                customer.Job = false;
-                customer.JobSpecified = true;
-                customer.BillWithParent = false;
-                customer.BillWithParentSpecified = true;
-                customer.Balance = new Decimal(100.00);
-                customer.BalanceSpecified = true;
-                customer.BalanceWithJobs = new Decimal(100.00);
-                customer.BalanceWithJobsSpecified = true;
-                customer.PreferredDeliveryMethod = "Print";
-                customer.ResaleNum = "ResaleNum";
-                customer.Title = "Title";
-                customer.GivenName = "GivenName";
-                customer.MiddleName = "MiddleName";
-                customer.FamilyName = "FamilyName";
-                customer.Suffix = "Suffix";
-                customer.FullyQualifiedName = "Name_" + guid;
-                customer.CompanyName = "CompanyName";
-                customer.DisplayName = "Name_" + guid;
-                customer.PrintOnCheckName = "PrintOnCheckName";
-
-                customer.Active = true;
-                customer.ActiveSpecified = true;
-                TelephoneNumber primaryPhone = new TelephoneNumber();
-
-                primaryPhone.FreeFormNumber = "FreeFormNumber";
-
-                customer.PrimaryPhone = primaryPhone;
-                TelephoneNumber alternatePhone = new TelephoneNumber();
-
-                alternatePhone.FreeFormNumber = "FreeFormNumber";
-
-                customer.AlternatePhone = alternatePhone;
-                TelephoneNumber mobile = new TelephoneNumber();
-
-                mobile.FreeFormNumber = "FreeFormNumber";
-
-                customer.Mobile = mobile;
-                TelephoneNumber fax = new TelephoneNumber();
-
-                fax.FreeFormNumber = "FreeFormNumber";
-
-                customer.Fax = fax;
-                EmailAddress primaryEmailAddr = new EmailAddress();
-                primaryEmailAddr.Address = "test@tesing.com";
-
-                customer.PrimaryEmailAddr = primaryEmailAddr;
-                WebSiteAddress webAddr = new WebSiteAddress();
-                webAddr.URI = "http://uri.com";
-                customer.WebAddr = webAddr;
-            }
+            #region create liability account
 
             //Get a liability account. If not present create one
             QueryService<Account> accountQuerySvc = new QueryService<Account>(serviceContext);
             Account liabilityAccount = accountQuerySvc.ExecuteIdsQuery("SELECT * FROM Account WHERE AccountType='Accounts Payable' AND Classification='Liability'").FirstOrDefault();
-            if(liabilityAccount == null)
+            if (liabilityAccount == null)
             {
-                liabilityAccount = new Account();
+                Account accountp = new Account();
                 String guid = Guid.NewGuid().ToString("N");
-                liabilityAccount.Name = "Name_" + guid;
+                accountp.Name = "Name_" + guid;
 
-                liabilityAccount.FullyQualifiedName = liabilityAccount.Name;
+                accountp.FullyQualifiedName = liabilityAccount.Name;
 
-                liabilityAccount.Classification = AccountClassificationEnum.Liability;
-                liabilityAccount.ClassificationSpecified = true;
-                liabilityAccount.AccountType = AccountTypeEnum.AccountsPayable;
-                liabilityAccount.AccountTypeSpecified = true;
+                accountp.Classification = AccountClassificationEnum.Liability;
+                accountp.ClassificationSpecified = true;
+                accountp.AccountType = AccountTypeEnum.AccountsPayable;
+                accountp.AccountTypeSpecified = true;
 
-                liabilityAccount.CurrencyRef = new ReferenceType()
+                accountp.CurrencyRef = new ReferenceType()
                 {
                     name = "United States Dollar",
                     Value = "USD"
                 };
+                liabilityAccount = dataService.Add<Account>(accountp);
             }
+            #endregion
 
+            #region create expense account
             //Get a Expense account. If not present create one
             Account expenseAccount = accountQuerySvc.ExecuteIdsQuery("SELECT * FROM Account WHERE AccountType='Expense' AND Classification='Expense'").FirstOrDefault();
             if (expenseAccount == null)
             {
-                expenseAccount = new Account();
+                Account accounte = new Account();
                 String guid = Guid.NewGuid().ToString("N");
-                expenseAccount.Name = "Name_" + guid;
+                accounte.Name = "Name_" + guid;
 
-                expenseAccount.FullyQualifiedName = expenseAccount.Name;
+                accounte.FullyQualifiedName = expenseAccount.Name;
 
-                expenseAccount.Classification = AccountClassificationEnum.Liability;
-                expenseAccount.ClassificationSpecified = true;
-                expenseAccount.AccountType = AccountTypeEnum.AccountsPayable;
-                expenseAccount.AccountTypeSpecified = true;
+                accounte.Classification = AccountClassificationEnum.Liability;
+                accounte.ClassificationSpecified = true;
+                accounte.AccountType = AccountTypeEnum.AccountsPayable;
+                accounte.AccountTypeSpecified = true;
 
-                expenseAccount.CurrencyRef = new ReferenceType()
+                accounte.CurrencyRef = new ReferenceType()
                 {
                     name = "United States Dollar",
                     Value = "USD"
                 };
+                expenseAccount = dataService.Add<Account>(accounte);
             }
+            #endregion
 
+            #region create bill for the added vendor
             //Create a bill and add a vendor reference
             Bill bill = new Bill();
+
             bill.DueDate = DateTime.UtcNow.Date;
             bill.DueDateSpecified = true;
             bill.VendorRef = new ReferenceType()
@@ -308,20 +217,26 @@ namespace MvcCodeFlowClientManual.Controllers
 
             //Create an AccountBasedExpenseLineDetail
             AccountBasedExpenseLineDetail detail = new AccountBasedExpenseLineDetail();
-            detail.CustomerRef = new ReferenceType { type = Enum.GetName(typeof(objectNameEnumType), objectNameEnumType.Customer), name = customer.DisplayName, Value = customer.Id };
-            detail.AccountRef = new ReferenceType { type = Enum.GetName(typeof(objectNameEnumType), objectNameEnumType.Account), name = expenseAccount.Name, Value = expenseAccount.Id };
+            detail.CustomerRef = new ReferenceType { name = customeradded.DisplayName, Value = customeradded.Id };
+            detail.AccountRef = new ReferenceType { name = expenseAccount.Name, Value = expenseAccount.Id };
             detail.BillableStatus = BillableStatusEnum.NotBillable;
             line.AnyIntuitObject = detail;
-            return bill;
+            Bill billadded = dataService.Add<Bill>(bill);
+            return billadded;
+            #endregion
         }
+        #endregion
+
+        #region create vendor credit
 
         /*
          * Creates a VendorCredit 
          * The VendorCredit object is an accounts payable transaction that represents a refund or credit of payment for goods or services. 
          * It is a credit that a vendor owes you for various reasons such as overpaid bill, returned merchandise, or other reasons.
          */
-        private static VendorCredit CreateVendorCredit(ServiceContext serviceContext, Vendor vendor)
+        private VendorCredit CreateVendorCredit(ServiceContext serviceContext, Vendor vendor)
         {
+            DataService dataService = new DataService(serviceContext);
             QueryService<Account> accountQuerySvc = new QueryService<Account>(serviceContext);
             //Create a VendorCredut and add a reference to a Vendor 
             VendorCredit vendorCredit = new VendorCredit();
@@ -332,26 +247,32 @@ namespace MvcCodeFlowClientManual.Controllers
             };
 
             //Create a Liability Account and add a reference to the Vendor Credit. If not present create a  Liability Account
+            #region create liability account
+
+            //Get a liability account. If not present create one
+          
             Account liabilityAccount = accountQuerySvc.ExecuteIdsQuery("SELECT * FROM Account WHERE AccountType='Accounts Payable' AND Classification='Liability'").FirstOrDefault();
             if (liabilityAccount == null)
             {
-                liabilityAccount = new Account();
+                Account accountp = new Account();
                 String guid = Guid.NewGuid().ToString("N");
-                liabilityAccount.Name = "Name_" + guid;
+                accountp.Name = "Name_" + guid;
 
-                liabilityAccount.FullyQualifiedName = liabilityAccount.Name;
+                accountp.FullyQualifiedName = liabilityAccount.Name;
 
-                liabilityAccount.Classification = AccountClassificationEnum.Liability;
-                liabilityAccount.ClassificationSpecified = true;
-                liabilityAccount.AccountType = AccountTypeEnum.AccountsPayable;
-                liabilityAccount.AccountTypeSpecified = true;
+                accountp.Classification = AccountClassificationEnum.Liability;
+                accountp.ClassificationSpecified = true;
+                accountp.AccountType = AccountTypeEnum.AccountsPayable;
+                accountp.AccountTypeSpecified = true;
 
-                liabilityAccount.CurrencyRef = new ReferenceType()
+                accountp.CurrencyRef = new ReferenceType()
                 {
                     name = "United States Dollar",
                     Value = "USD"
                 };
+                liabilityAccount = dataService.Add<Account>(accountp);
             }
+            #endregion
             vendorCredit.APAccountRef = new ReferenceType()
             {
                 name = liabilityAccount.Name,
@@ -373,27 +294,31 @@ namespace MvcCodeFlowClientManual.Controllers
             line.DetailType = LineDetailTypeEnum.AccountBasedExpenseLineDetail;
             line.DetailTypeSpecified = true;
 
-            //Find an expense account and add a reference to it. If not present create one
+            #region create expense account
+            //Get a Expense account. If not present create one
             Account expenseAccount = accountQuerySvc.ExecuteIdsQuery("SELECT * FROM Account WHERE AccountType='Expense' AND Classification='Expense'").FirstOrDefault();
             if (expenseAccount == null)
             {
-                expenseAccount = new Account();
+                Account accounte = new Account();
                 String guid = Guid.NewGuid().ToString("N");
-                expenseAccount.Name = "Name_" + guid;
+                accounte.Name = "Name_" + guid;
 
-                expenseAccount.FullyQualifiedName = expenseAccount.Name;
+                accounte.FullyQualifiedName = expenseAccount.Name;
 
-                expenseAccount.Classification = AccountClassificationEnum.Liability;
-                expenseAccount.ClassificationSpecified = true;
-                expenseAccount.AccountType = AccountTypeEnum.AccountsPayable;
-                expenseAccount.AccountTypeSpecified = true;
+                accounte.Classification = AccountClassificationEnum.Liability;
+                accounte.ClassificationSpecified = true;
+                accounte.AccountType = AccountTypeEnum.AccountsPayable;
+                accounte.AccountTypeSpecified = true;
 
-                expenseAccount.CurrencyRef = new ReferenceType()
+                accounte.CurrencyRef = new ReferenceType()
                 {
                     name = "United States Dollar",
                     Value = "USD"
                 };
+                expenseAccount = dataService.Add<Account>(accounte);
             }
+            #endregion
+
 
             line.AnyIntuitObject = new AccountBasedExpenseLineDetail()
             {
@@ -401,9 +326,13 @@ namespace MvcCodeFlowClientManual.Controllers
             };
             lineList.Add(line);
             vendorCredit.Line = lineList.ToArray();
+            VendorCredit vendorcreditAdded = dataService.Add<VendorCredit>(vendorCredit);
 
-            return vendorCredit;
+            return vendorcreditAdded;
         }
+        #endregion
+
+        #region create billpayment
 
         /*
          * Create a BillPayment. 
@@ -412,6 +341,7 @@ namespace MvcCodeFlowClientManual.Controllers
          */
         private static BillPayment CreateBillPaymentCreditCard(ServiceContext serviceContext, Vendor vendor, Bill bill)
         {
+            DataService dataService = new DataService(serviceContext);
             QueryService<Account> accountQuerySvc = new QueryService<Account>(serviceContext);
 
             //Create a bill payment and associate it to the vendor. Add VendorCredit
@@ -430,27 +360,31 @@ namespace MvcCodeFlowClientManual.Controllers
                 Value = vendor.Id
             };
 
+            #region create bank account
             //Create a Bank Account of type Credit Card. The bill payment will be via this account. If not present create a credit card account
             Account bankAccount = accountQuerySvc.ExecuteIdsQuery("SELECT * FROM Account WHERE AccountType='Credit Card' AND Classification='Liability'").FirstOrDefault();
             if (bankAccount == null)
             {
-                bankAccount = new Account();
+                Account accountb = new Account();
                 String guid = Guid.NewGuid().ToString("N");
-                bankAccount.Name = "Name_" + guid;
+                accountb.Name = "Name_" + guid;
 
-                bankAccount.FullyQualifiedName = bankAccount.Name;
+                accountb.FullyQualifiedName = bankAccount.Name;
 
-                bankAccount.Classification = AccountClassificationEnum.Liability;
-                bankAccount.ClassificationSpecified = true;
-                bankAccount.AccountType = AccountTypeEnum.CreditCard;
-                bankAccount.AccountTypeSpecified = true;
+                accountb.Classification = AccountClassificationEnum.Liability;
+                accountb.ClassificationSpecified = true;
+                accountb.AccountType = AccountTypeEnum.CreditCard;
+                accountb.AccountTypeSpecified = true;
 
-                bankAccount.CurrencyRef = new ReferenceType()
+                accountb.CurrencyRef = new ReferenceType()
                 {
                     name = "United States Dollar",
                     Value = "USD"
                 };
+                bankAccount = dataService.Add<Account>(accountb);
             }
+            #endregion
+
             BillPaymentCreditCard billPaymentCreditCard = new BillPaymentCreditCard();
             billPaymentCreditCard.CCAccountRef = new ReferenceType()
             {
@@ -502,8 +436,9 @@ namespace MvcCodeFlowClientManual.Controllers
             line.LinkedTxn = LinkedTxnList.ToArray();
             lineList.Add(line);
             billPayment.Line = lineList.ToArray();
-
-            return billPayment;
+            BillPayment billPaymentAdded = dataService.Add<BillPayment>(billPayment);
+            return billPaymentAdded;
         }
     }
+    #endregion
 }

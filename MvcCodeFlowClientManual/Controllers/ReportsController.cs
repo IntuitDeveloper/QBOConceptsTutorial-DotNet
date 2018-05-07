@@ -27,6 +27,11 @@ namespace MvcCodeFlowClientManual.Controllers
         {
             return View();
         }
+
+        /// <summary>
+        /// Thsi worflow covers reports read/execute
+        /// </summary>
+        /// <returns></returns>
         public async Task<ActionResult> ReportsWorkflow()
         {
             //Make QBO api calls using .Net SDK
@@ -96,7 +101,7 @@ namespace MvcCodeFlowClientManual.Controllers
                     Report cashBalanceSheet = cashReportService1.ExecuteReport("BalanceSheet");
 
                     /* Year End Balance Sheet report summarized by Customer
-                     * set the customer property to the customer.Id and set summarize_column_by property to "Customers"
+                     * set the customer property to the customer.Set summarize_column_by property to "Customers"
                      * You can also set customer property with multiple customer ids comma seperated.
                      * You can summarize by the following:Total, Customers, Vendors, Classes, Departments, Employees, ProductsAndServices by setting the summarize_column_by property
                      * */
@@ -108,14 +113,14 @@ namespace MvcCodeFlowClientManual.Controllers
                     Report yearEndReportByCustomer = customerReportService.ExecuteReport("BalanceSheet");
 
                     /* Year End report summarized by Customer
-                     * set the customer property to the customer.Id and set summarize_column_by property to "Customers"
+                     * set the customer property to the customer.Set summarize_column_by property to "Customers"
                      * You can also set customer property with multiple customer ids comma seperated.
                      * You can summarize by the following:Total, Customers, Vendors, Classes, Departments, Employees, ProductsAndServices by setting the summarize_column_by property
                      * */
                     ReportService customerReportService1 = new ReportService(serviceContext);
                     customerReportService1.start_date = "2018-01-01";
                     customerReportService1.end_date = "2018-12-31";
-                    customerReportService1.customer = "1";
+                    
                     customerReportService1.summarize_column_by = "Customers";
                     Report yearEndPnLByCustomer = customerReportService1.ExecuteReport("ProfitAndLoss");
 

@@ -27,7 +27,10 @@ namespace MvcCodeFlowClientManual.Controllers
         {
             return View();
         }
-
+        /// <summary>
+        /// This workflow coverscreating account, item, customer, invoice,payment and sending invoice
+        /// </summary>
+        /// <returns></returns>
         public async Task<ActionResult> InvoicingWorkflow()
         {
             //Make QBO api calls using .Net SDK
@@ -38,7 +41,7 @@ namespace MvcCodeFlowClientManual.Controllers
                 try
                 {
 
-                    
+
 
                     //Initialize OAuth2RequestValidator and ServiceContext
                     ServiceContext serviceContext = base.IntializeContext(realmId);
@@ -46,7 +49,7 @@ namespace MvcCodeFlowClientManual.Controllers
 
                     //Create Account 
                     Account account = CreateAccount();
-                    Account accountAdded =  dataService.Add<Account>(account);
+                    Account accountAdded = dataService.Add<Account>(account);
 
                     //Add customer
                     Customer customer = CreateCustomer();
@@ -60,14 +63,14 @@ namespace MvcCodeFlowClientManual.Controllers
                     Invoice objInvoice = CreateInvoice(realmId, customerCreated, itemAdded);
                     Invoice addedInvoice = dataService.Add<Invoice>(objInvoice);
                     //Email invoice
-                    
+
                     // sending invoice 
-                    dataService.SendEmail<Invoice>(addedInvoice, "manishk73@gmail.com");
+                    dataService.SendEmail<Invoice>(addedInvoice, "abc@gmail.com");
 
                     //Recieve payment for this invoice
 
-                   Payment payment = CreatePayment(customerCreated, addedInvoice);
-                   dataService.Add<Payment>(payment);
+                    Payment payment = CreatePayment(customerCreated, addedInvoice);
+                    dataService.Add<Payment>(payment);
 
                     return View("Index", (object)("QBO API calls Success!"));
                 }
@@ -81,14 +84,14 @@ namespace MvcCodeFlowClientManual.Controllers
                 return View("Index", (object)"QBO API call Failed!");
         }
 
-
+        #region create account
         private Account CreateAccount()
         {
 
             Random randomNum = new Random();
             Account account = new Account();
 
-         
+
             account.Name = "Name_" + randomNum.Next();
 
             account.FullyQualifiedName = account.Name;
@@ -106,13 +109,16 @@ namespace MvcCodeFlowClientManual.Controllers
 
             return account;
         }
+    #endregion
+
+        #region create item
         /// <summary>
         /// This API creates invoice item 
         /// </summary>
         /// <returns></returns>
         private Item CreateItem(Account incomeAccount)
         {
-           
+
             Item item = new Item();
 
             Random randomNum = new Random();
@@ -135,7 +141,7 @@ namespace MvcCodeFlowClientManual.Controllers
             item.TrackQtyOnHand = false;
             item.TrackQtyOnHandSpecified = true;
 
-          
+
             item.IncomeAccountRef = new ReferenceType()
             {
                 name = incomeAccount.Name,
@@ -147,11 +153,14 @@ namespace MvcCodeFlowClientManual.Controllers
                 name = incomeAccount.Name,
                 Value = incomeAccount.Id
             };
+
+            //For inventory item, assetacocunref is required
             return item;
 
         }
+        #endregion
 
-       
+        #region create customer
         /// <summary>
         /// This API creates customer 
         /// </summary>
@@ -160,40 +169,27 @@ namespace MvcCodeFlowClientManual.Controllers
         {
             Random random = new Random();
             Customer customer = new Customer();
-            customer.AcctNum = "221121" + random.Next();
-            customer.Active = true;
-            customer.AltContactName = "Another Contact ";
-            TelephoneNumber telephone = new TelephoneNumber();
-            telephone.FreeFormNumber = "510-291-9831";
-            customer.AlternatePhone = telephone;
-            customer.Balance = 1000;
-            customer.CompanyName = "Water works " + random.Next();
-            customer.ContactName = "Bob Sterling";
-            customer.CreditLimit = 2000;
-            customer.CreditLimitSpecified = true;
-            customer.domain = "www.waterworks.com";
-            customer.TDSEnabled = true;
-            customer.TDSEnabledSpecified = true;
+            
             customer.GivenName = "Bob" + random.Next();
             customer.FamilyName = "Serling";
             customer.DisplayName = customer.CompanyName;
             return customer;
         }
-       
+
 
         /// <summary>
         /// This API creates an Invoice
         /// </summary>
         private Invoice CreateInvoice(string realmId, Customer customer, Item item)
         {
-            
+
 
             // Step 1: Initialize OAuth2RequestValidator and ServiceContext
             ServiceContext serviceContext = IntializeContext(realmId);
 
             // Step 2: Initialize an Invoice object
             Invoice invoice = new Invoice();
-           // invoice.Deposit = new Decimal(0.00);
+            // invoice.Deposit = new Decimal(0.00);
             //invoice.DepositSpecified = true;
 
             // Step 3: Invoice is always created for a customer so lets retrieve reference to a customer and set it in Invoice
@@ -206,8 +202,8 @@ namespace MvcCodeFlowClientManual.Controllers
 
 
             // Step 4: Invoice is always created for an item so lets retrieve reference to an item and a Line item to the invoice
-           /* QueryService<Item> querySvcItem = new QueryService<Item>(serviceContext);
-           Item item = querySvcItem.ExecuteIdsQuery("SELECT * FROM Item WHERE Name = 'Lighting'").FirstOrDefault();*/
+            /* QueryService<Item> querySvcItem = new QueryService<Item>(serviceContext);
+            Item item = querySvcItem.ExecuteIdsQuery("SELECT * FROM Item WHERE Name = 'Lighting'").FirstOrDefault();*/
             List<Line> lineList = new List<Line>();
             Line line = new Line();
             line.Description = "Description";
@@ -251,41 +247,46 @@ namespace MvcCodeFlowClientManual.Controllers
             };
             return invoice;
         }
+#endregion
 
-    /// <summary>
-    /// Creating payment transaction 
-    /// </summary>
-    /// <param name="customer"></param>
-    /// <param name="invoiceCreated"></param>
-    /// <returns></returns>
-      private  Payment CreatePayment(Customer customer, Invoice invoiceCreated)
-       {
+        #region create payment
+        /// <summary>
+        /// Creating payment transaction - Make sure payment is created for same customerref as invoice r must be parent of the customeref which invoice has
+        /// </summary>
+        /// <param name="customer"></param>
+        /// <param name="invoiceCreated"></param>
+        /// <returns></returns>
+        private Payment CreatePayment(Customer customer, Invoice invoiceCreated)
+        {
             Payment payment = new Payment();
             payment.CustomerRef = new ReferenceType
             {
                 name = customer.DisplayName,
                 Value = customer.Id
             };
-            payment.CurrencyRef = new ReferenceType {
-                   type = "Currency",
-                   Value = "USD"
+            payment.CurrencyRef = new ReferenceType
+            {
+                type = "Currency",
+                Value = "USD"
             };
             payment.TotalAmt = invoiceCreated.TotalAmt;
             payment.TotalAmtSpecified = true;
 
             List<LinkedTxn> linkedTxns = new List<LinkedTxn>();
-            linkedTxns.Add(new LinkedTxn() {
+            linkedTxns.Add(new LinkedTxn()
+            {
                 TxnId = invoiceCreated.Id,
                 TxnType = TxnTypeEnum.Invoice.ToString()
             });
 
-             foreach(Line line in invoiceCreated.Line)
-             {
-                 line.LinkedTxn = linkedTxns.ToArray();
-             }
+            foreach (Line line in invoiceCreated.Line)
+            {
+                line.LinkedTxn = linkedTxns.ToArray();
+            }
 
             payment.Line = invoiceCreated.Line;
             return payment;
         }
     }
+    #endregion
 }

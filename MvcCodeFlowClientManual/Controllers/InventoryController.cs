@@ -26,7 +26,10 @@ namespace MvcCodeFlowClientManual.Controllers
         {
             return View();
         }
-
+        /// <summary>
+        /// This workflow covers creating accounts, inventory item, invoice
+        /// </summary>
+        /// <returns></returns>
         public async Task<ActionResult> InventoryWorkflow()
         {
             //Make QBO api calls using .Net SDK
@@ -77,7 +80,7 @@ namespace MvcCodeFlowClientManual.Controllers
             Item newItem = new Item
             {
                 Type = ItemTypeEnum.Inventory,
-                Name = "My Inventory 15", // Please change the name every time
+                Name = "My Inventory 15"  +Guid.NewGuid().ToString("N"), // Please change the name every time
                 QtyOnHand = 10,
                 InvStartDate = DateTime.Today,
                 Description = "New Inventory with quantity 10",
@@ -112,9 +115,11 @@ namespace MvcCodeFlowClientManual.Controllers
             // We are creating new Account by type and subtype which we will use for new inventory
             // The Account name should be unique
             // Following lines are just object creation, to create this account in QBO it should follow by the service call
+            Random random = new Random();
             Account newAccount = new Account
             {
-                Name = "My "+type.ToString()+" Account 15", // Dont forget to change the name before running the code
+                
+                Name = "My "+type.ToString()+ random.Next(), // Dont forget to change the name before running the code
                 AccountType = type,
                 AccountSubType = subType.ToString(),
                 AccountTypeSpecified = true,

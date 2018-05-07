@@ -27,7 +27,10 @@ namespace MvcCodeFlowClientManual.Controllers
         {
             return View();
         }
-
+        /// <summary>
+        /// This workflow covers create customer, item, estimate and invoice and updating estimate
+        /// </summary>
+        /// <returns></returns>
         public async Task<ActionResult> JobsWorkflow()
         {
             //Make QBO api calls using .Net SDK
@@ -42,6 +45,7 @@ namespace MvcCodeFlowClientManual.Controllers
                     ServiceContext serviceContext = base.IntializeContext(realmId);
                     DataService dataService = new DataService(serviceContext);
 
+                    #region add customer
                     // Add Customer
                     Customer customer = new Customer();
                     String customerName = "Brad Smith";
@@ -57,7 +61,9 @@ namespace MvcCodeFlowClientManual.Controllers
                         customer.DisplayName = customerName;
                         customer = dataService.Add(customer);
                     }
+                    #endregion
 
+                    #region add item
                     // Add Item
                     Item item = new Item();
                     String itemName = "Hair Bronzing";
@@ -99,7 +105,9 @@ namespace MvcCodeFlowClientManual.Controllers
                         };
                         item = dataService.Add(item);
                     }
+                    #endregion
 
+                    #region create estimate
                     // Create Estimate
                     Estimate estimate = new Estimate();
                     estimate.CustomerRef = new ReferenceType()
@@ -123,7 +131,9 @@ namespace MvcCodeFlowClientManual.Controllers
                     lineList.Add(line);
                     estimate.Line = lineList.ToArray();
                     estimate = dataService.Add<Estimate>(estimate);
+                    #endregion
 
+                    #region update estimate amount
                     // Update Amount in Estimate
                     lineList = estimate.Line.ToList();
                     foreach (Line estimateLine in lineList) {
@@ -136,7 +146,9 @@ namespace MvcCodeFlowClientManual.Controllers
                         }
                     }
                     estimate = dataService.Update<Estimate>(estimate);
+                    #endregion
 
+                    #region convert/link estimate to invoice
                     // Convert Estimate to Invoice
                     Invoice invoice = new Invoice();
                     invoice.CustomerRef = estimate.CustomerRef;
@@ -191,7 +203,8 @@ namespace MvcCodeFlowClientManual.Controllers
                     //Set DepositSpecified explicity to false, as it may not be supported by all QBO SKUs
                     invoice.DepositSpecified = false;
                     invoice = dataService.Update<Invoice>(invoice);
-                    
+                    #endregion
+
                     return View("Index", (object)("QBO API calls Success!"));
                 }
                 catch (Exception ex)
