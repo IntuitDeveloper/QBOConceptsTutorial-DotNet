@@ -191,7 +191,8 @@ namespace MvcCodeFlowClientManual.Controllers
             Invoice invoice = new Invoice();
             // invoice.Deposit = new Decimal(0.00);
             //invoice.DepositSpecified = true;
-
+            
+            
             // Step 3: Invoice is always created for a customer so lets retrieve reference to a customer and set it in Invoice
             /*QueryService<Customer> querySvc = new QueryService<Customer>(serviceContext);
             Customer customer = querySvc.ExecuteIdsQuery("SELECT * FROM Customer WHERE CompanyName like 'Amy%'").FirstOrDefault();*/
