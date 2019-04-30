@@ -80,9 +80,6 @@
     <Reference Include="Intuit.Ipp.LinqExtender, Version=7.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>packages\IppDotNetSdkForQuickBooksApiV3.7.1.0-beta\lib\Intuit.Ipp.LinqExtender.dll</HintPath>
     </Reference>
-    <Reference Include="Intuit.Ipp.OAuth2PlatformClient, Version=7.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\IppDotNetSdkForQuickBooksApiV3.7.1.0-beta\lib\Intuit.Ipp.OAuth2PlatformClient.dll</HintPath>
-    </Reference>
     <Reference Include="Intuit.Ipp.PlatformService, Version=7.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>packages\IppDotNetSdkForQuickBooksApiV3.7.1.0-beta\lib\Intuit.Ipp.PlatformService.dll</HintPath>
     </Reference>
