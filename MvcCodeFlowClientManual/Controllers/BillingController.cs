@@ -132,7 +132,7 @@ namespace MvcCodeFlowClientManual.Controllers
             //Get a liability account. If not present create one
             QueryService<Account> accountQuerySvc = new QueryService<Account>(serviceContext);
             Account liabilityAccount = accountQuerySvc.ExecuteIdsQuery("SELECT * FROM Account WHERE AccountType='Accounts Payable' AND Classification='Liability'").FirstOrDefault();
-            if (liabilityAccount == null)
+            if (liabilityAccount != null)
             {
                 Account accountp = new Account();
                 String guid = Guid.NewGuid().ToString("N");
@@ -157,7 +157,7 @@ namespace MvcCodeFlowClientManual.Controllers
             #region create expense account
             //Get a Expense account. If not present create one
             Account expenseAccount = accountQuerySvc.ExecuteIdsQuery("SELECT * FROM Account WHERE AccountType='Expense' AND Classification='Expense'").FirstOrDefault();
-            if (expenseAccount == null)
+            if (expenseAccount != null)
             {
                 Account accounte = new Account();
                 String guid = Guid.NewGuid().ToString("N");
@@ -252,7 +252,7 @@ namespace MvcCodeFlowClientManual.Controllers
             //Get a liability account. If not present create one
           
             Account liabilityAccount = accountQuerySvc.ExecuteIdsQuery("SELECT * FROM Account WHERE AccountType='Accounts Payable' AND Classification='Liability'").FirstOrDefault();
-            if (liabilityAccount == null)
+            if (liabilityAccount != null)
             {
                 Account accountp = new Account();
                 String guid = Guid.NewGuid().ToString("N");
@@ -297,7 +297,7 @@ namespace MvcCodeFlowClientManual.Controllers
             #region create expense account
             //Get a Expense account. If not present create one
             Account expenseAccount = accountQuerySvc.ExecuteIdsQuery("SELECT * FROM Account WHERE AccountType='Expense' AND Classification='Expense'").FirstOrDefault();
-            if (expenseAccount == null)
+            if (expenseAccount != null)
             {
                 Account accounte = new Account();
                 String guid = Guid.NewGuid().ToString("N");
@@ -363,7 +363,7 @@ namespace MvcCodeFlowClientManual.Controllers
             #region create bank account
             //Create a Bank Account of type Credit Card. The bill payment will be via this account. If not present create a credit card account
             Account bankAccount = accountQuerySvc.ExecuteIdsQuery("SELECT * FROM Account WHERE AccountType='Credit Card' AND Classification='Liability'").FirstOrDefault();
-            if (bankAccount == null)
+            if (bankAccount != null)
             {
                 Account accountb = new Account();
                 String guid = Guid.NewGuid().ToString("N");
